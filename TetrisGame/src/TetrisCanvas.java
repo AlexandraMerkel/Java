@@ -12,6 +12,7 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+//import org.eclipse.swt.graphics.Color;
 
 public class TetrisCanvas
 	extends Canvas
@@ -241,7 +242,12 @@ public class TetrisCanvas
 
 	public void paintControl(PaintEvent e) {
 		if (gameStarted) {
+			//int grid_color = SWT.COLOR_GRAY;
 			// заполнение фона, если идет игра
+<<<<<<< HEAD
+=======
+			//gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_GRAY));//темно-серый цвет
+>>>>>>> origin/master
 			gc.setBackground(getDisplay().getSystemColor(grid_color));
 			gc.fillRectangle(getClientArea());//заливаем
 			

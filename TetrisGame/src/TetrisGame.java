@@ -36,6 +36,10 @@ public class TetrisGame extends Shell {
 
 		tetris = new TetrisCanvas(this);
 		tetris.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));//заполнение по горизонтали и вертакали 
+<<<<<<< HEAD
+=======
+		//tetris.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
+>>>>>>> origin/master
 		menu = new TetrisMenu(this);
 		menu.createMenu(this, tetris);
 	}
