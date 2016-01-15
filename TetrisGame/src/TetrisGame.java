@@ -12,40 +12,37 @@ public class TetrisGame extends Shell {
 	public static void main(String args[]) {
 	
 		Display display = new Display();
-		TetrisGame shell = new TetrisGame(display, SWT.TITLE | SWT.CLOSE | SWT.MIN );//кнопочки свернуть, закрыть
+		TetrisGame shell = new TetrisGame(display, SWT.TITLE | SWT.CLOSE | SWT.MIN );//ГЄГ­Г®ГЇГ®Г·ГЄГЁ Г±ГўГҐГ°Г­ГіГІГј, Г§Г ГЄГ°Г»ГІГј
 		
 		shell.open();
 		shell.layout();
 		
 		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())//читает события из очереди сообщений
+			if (!display.readAndDispatch())//Г·ГЁГІГ ГҐГІ Г±Г®ГЎГ»ГІГЁГї ГЁГ§ Г®Г·ГҐГ°ГҐГ¤ГЁ Г±Г®Г®ГЎГ№ГҐГ­ГЁГ©
 				display.sleep();
 		}
 		display.dispose();
 }
-		public TetrisGame(Display display, int style) { // конструктор
-		super(display, style); // вызов конструктора суперкласса
-		createСontentsofWindow();
+		public TetrisGame(Display display, int style) { // ГЄГ®Г­Г±ГІГ°ГіГЄГІГ®Г°
+		super(display, style); // ГўГ»Г§Г®Гў ГЄГ®Г­Г±ГІГ°ГіГЄГІГ®Г°Г  Г±ГіГЇГҐГ°ГЄГ«Г Г±Г±Г 
+		createГ‘ontentsofWindow();
 	}
-		// задаем внешний вид окна игры
-		protected void createСontentsofWindow() {
-		setBounds(250, 50, 335, 595);//положение и размеры окна
+		// Г§Г Г¤Г ГҐГ¬ ГўГ­ГҐГёГ­ГЁГ© ГўГЁГ¤ Г®ГЄГ­Г  ГЁГЈГ°Г»
+		protected void createГ‘ontentsofWindow() {
+		setBounds(250, 50, 335, 595);//ГЇГ®Г«Г®Г¦ГҐГ­ГЁГҐ ГЁ Г°Г Г§Г¬ГҐГ°Г» Г®ГЄГ­Г 
 		setText("Tetris Game!");
 				
 		setLayout(new GridLayout());
 
 		tetris = new TetrisCanvas(this);
-		tetris.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));//заполнение по горизонтали и вертакали 
-<<<<<<< HEAD
-=======
-		//tetris.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
->>>>>>> origin/master
+		tetris.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));//Г§Г ГЇГ®Г«Г­ГҐГ­ГЁГҐ ГЇГ® ГЈГ®Г°ГЁГ§Г®Г­ГІГ Г«ГЁ ГЁ ГўГҐГ°ГІГ ГЄГ Г«ГЁ 
+
 		menu = new TetrisMenu(this);
 		menu.createMenu(this, tetris);
 	}
 	
 	@Override
 	protected void checkSubclass() {
-		// переопределяем метод  (отключаем проверку на подклассы)
+		// ГЇГҐГ°ГҐГ®ГЇГ°ГҐГ¤ГҐГ«ГїГҐГ¬ Г¬ГҐГІГ®Г¤  (Г®ГІГЄГ«ГѕГ·Г ГҐГ¬ ГЇГ°Г®ГўГҐГ°ГЄГі Г­Г  ГЇГ®Г¤ГЄГ«Г Г±Г±Г»)
 	}
 }
