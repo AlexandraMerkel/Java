@@ -44,7 +44,7 @@ public class TetrisCanvas
 		addDisposeListener(this);// для очищения
 		x_size = 15;// размеры поля (в блоках)
 		y_size = 24;
-		grid_color = SWT.COLOR_GRAY;
+		grid_color = SWT.COLOR_GRAY;// по умолчанию сетка есть
 		
 		backimage = new Image(getDisplay(), x_size * 22, y_size * 23);// создаем объект класса изображений
 		gc = new GC(backimage); // будем рисовать на нем
