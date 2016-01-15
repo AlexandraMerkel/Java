@@ -24,6 +24,7 @@ public class TetrisCanvas
 	private int x_size; // размеры поля в блоках
 	private int y_size;
 	private int score;//очки
+	public int grid_color;// цвет фона (для сетки)
 	private Image backimage;//объект класса изображений
 	private GC gc; // для рисования на изображении
 	private Block[][] blocks;
@@ -42,14 +43,14 @@ public class TetrisCanvas
 		addDisposeListener(this);// для очищения
 		x_size = 15;// размеры поля (в блоках)
 		y_size = 24;
+		grid_color = SWT.COLOR_GRAY;// по умолчанию сетка есть
 		
 		backimage = new Image(getDisplay(), x_size * 22, y_size * 23);// создаем объект класса изображений
 		gc = new GC(backimage); // будем рисовать на нем
-		//initializationGame();
 	}
 
 	// начинаем игру
-	public void initializationGame() {
+	public void initializeGame() {
 		gameStarted = true;
 		score = 0;
 		blocks = new Block[x_size][y_size];// создаем массив для поля
@@ -62,12 +63,12 @@ public class TetrisCanvas
 		}
 		// создаем нижнюю границу поля (блоки считаются заполненными)
 		for (int i = 0; i < x_size; i++) {
-			blocks[i][y_size - 1] = new Block(getDisplay().getSystemColor(SWT.COLOR_GRAY), true);
+			blocks[i][y_size - 1] = new Block(getDisplay().getSystemColor(grid_color), true);
 		}
 		// создаем боковые границы поля (блоки также считаются заполненными)
 		for (int i = 0; i < y_size; i++) {
-			blocks[0][i] = new Block( getDisplay().getSystemColor(SWT.COLOR_GRAY), true);
-			blocks[x_size - 1][i] = new Block( getDisplay().getSystemColor(SWT.COLOR_GRAY), true);
+			blocks[0][i] = new Block( getDisplay().getSystemColor(grid_color), true);
+			blocks[x_size - 1][i] = new Block( getDisplay().getSystemColor(grid_color), true);
 		}
 		// создаем первую фигуру
 		createTetramino();
@@ -99,13 +100,13 @@ public class TetrisCanvas
 	}
 	
 	// сброс фигуры вниз
-		private void falling() {
+		private void fall() {
 			while (stepDown()) {
 			}
 		}
 	
 	// проверка, достигла ли фигура заполненных блоков (границ поля или "старых" фигур)
-		private boolean isDocking(int x, int y) {
+		private boolean isTouching(int x, int y) {
 			for (int i = 0; i < 4; i++) {
 				for (int j = 0; j < 4; j++) {
 					if (tetramino.field[i][j] == true
@@ -120,7 +121,7 @@ public class TetrisCanvas
 		}
 
 	private boolean stepDown() {//двигайся вниз, пока не достиг дна (или других фигур)
-		if (!isDocking(0, 1)) {
+		if (!isTouching(0, 1)) {
 			tetramino.y++;
 			return true;
 		} else {
@@ -134,12 +135,12 @@ public class TetrisCanvas
 		}
 	}
 	private void stepLeft() {//двигайся влево, пока не достиг стены (или других фигур)
-		if (!isDocking(-1, 0)) {
+		if (!isTouching(-1, 0)) {
 			tetramino.x--;
 		}
 	}
 	private void stepRight() {//аналогично вправо
-		if (!isDocking(1, 0)) {
+		if (!isTouching(1, 0)) {
 			tetramino.x++;
 		}
 	}
@@ -155,7 +156,7 @@ public class TetrisCanvas
 	}
 
 	// проверка линии (заполнилась ли?)
-	private boolean checkingLine() {
+	private boolean checkLine() {
 		for (int i = 0; i < y_size - 1; i++) {
 			boolean gap = false;// пробел
 			for (int j = 1; j < x_size - 1; j++) {
@@ -179,7 +180,7 @@ public class TetrisCanvas
 	public void run() {
 		stepDown();// движение вниз
 		redraw();//перерисовка фигуры
-		if (checkingLine()) {
+		if (checkLine()) {
 			redraw();//удаление линии
 		}
 		getDisplay().timerExec(slow, this);// вызов с замедлением (оно постепенно уменьшается, в зависимости от уровня)
@@ -203,14 +204,14 @@ public class TetrisCanvas
 	// события, связанные с нажатием клавиш
 	public void keyPressed(KeyEvent e) {
 			if (e.character == 'н' || e.character == 'y') {// если н/y, то начинаем новую игру (теперь не зависит от раскладки)
-				initializationGame();
+				initializeGame();
 			}
 			if (e.character == ' ') { // если пробел, то сбрасываем фигуру вниз
-				falling();
+				fall();
 				redraw();
 			} else if (e.keyCode == SWT.ARROW_UP) { // если вверх, то вращаем фигуру
 				tetramino.rotate();
-				while (isDocking(0, 0)) {//чтобы фигура не застревала в правой границе поля
+				while (isTouching(0, 0)) {//чтобы фигура не застревала в правой границе поля
 					tetramino.x--;
 				}
 				redraw();
@@ -241,7 +242,7 @@ public class TetrisCanvas
 	public void paintControl(PaintEvent e) {
 		if (gameStarted) {
 			// заполнение фона, если идет игра
-			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_GRAY));//темно-серый цвет
+			gc.setBackground(getDisplay().getSystemColor(grid_color));
 			gc.fillRectangle(getClientArea());//заливаем
 			
 			// рисование блоков
@@ -257,7 +258,7 @@ public class TetrisCanvas
 			// фигуры
 			drawTetramino(gc, tetramino);
 		} else {// если игра окончена
-			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_DARK_CYAN));
 			gc.fillRectangle(getClientArea());
 			textInfo.setText("Итоговый счет: " + score);
 		}
