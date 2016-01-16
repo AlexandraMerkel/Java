@@ -1,16 +1,15 @@
 import org.eclipse.swt.graphics.Color;
 
-public class Block { // класс одного отдельного блока игрового поля
+public class Block { // РєР»Р°СЃСЃ РѕС‚РґРµР»СЊРЅРѕРіРѕ Р±Р»РѕРєР° РёРіСЂРѕРІРѕРіРѕ РїРѕР»СЏ
+	private Color color; // С†РІРµС‚ 
+	private boolean filled; // Р·Р°РїРѕР»РЅРµРЅРЅРѕСЃС‚СЊ (0 - РїСѓСЃС‚, 1 - РІ РґР°РЅРЅРѕРј Р±Р»РѕРєРµ РµСЃС‚СЊ С„РёРіСѓСЂР°/РіСЂР°РЅРёС†Р° РїРѕР»СЏ)
 
-	private Color color; // цвет
-	private boolean filled; // заполненность (0-пуст, 1-в данном блоке есть фигура/границы поля)
-
-	Block(Color new_color, boolean new_filled) {//конструктор
+	Block(Color new_color, boolean new_filled) { 
 		color = new_color;
 		filled = new_filled;
 	}
 	
-	public boolean getFilled() { // здесь и далее гетеры и сетеры
+	public boolean getFilled() { 
 		return filled;
 	}
 	
