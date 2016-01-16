@@ -12,101 +12,101 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
-//import org.eclipse.swt.graphics.Color;
+
 
 public class TetrisCanvas
 	extends Canvas
 	implements PaintListener, Runnable, KeyListener, DisposeListener {
 
 	private Tetramino tetramino;
-	private boolean gameStarted;//èäåò ëè èãðà
-	private int slow = 500;// çàìåäëåíèå
-	private int level;// óðîâåíü (âëÿåò íà çàìåäëåíèå, ò.å. íà ñêîðîñòü ïàäåíèÿ ôèãóð)
-	private int x_size; // ðàçìåðû ïîëÿ â áëîêàõ
-	private int y_size;
-	private int score;//î÷êè
-	public int grid_color;// öâåò ôîíà (äëÿ ñåòêè)
-	private Image backimage;//îáúåêò êëàññà èçîáðàæåíèé
-	private GC gc; // äëÿ ðèñîâàíèÿ íà èçîáðàæåíèè
+	private boolean gameStarted; //идёт ли игра
+	private int slow = 500; // замедление 
+	private int level; // уровень (влияет на замедление, т.е. на скорость падения фигур)
+	private int x_size; // размеры поля в блоках
+	private int y_size; 
+	private int score;// очки
+	public int grid_color; // цвет сетки 
+	private Image backimage;// объект класса изображений
+	private GC gc; // для рисования на изображении
 	private Block[][] blocks;
-	private Text textInfo;//èíôà î òåêóùåì óðîâíå è ñ÷åòå
+	private Text textInfo; //информация о текущем уровне и счёте
 
 	public TetrisCanvas(Composite parent) {
-		super(parent, SWT.CENTER);//âûçûâàåì êîíñòðóêòîð ñóïåðêëàññà
-		gameStarted = false;
-		addPaintListener(this); // ëèñåíåð äëÿ ðèñîâàíèÿ
+		super(parent, SWT.CENTER); //вызов конструктора суперкласса
+		gameStarted = false; 
+		addPaintListener(this); // лисенер для рисования
 		setLayout(new GridLayout());
 		
 		textInfo = new Text(this, SWT.NONE);
 		textInfo.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));//çàïîëíåíèå ïî ãîðèçîíòàëè, ñâåðõó
 				
-		addKeyListener(this);// ëèñåíåð äëÿ êëàâèø
-		addDisposeListener(this);// äëÿ î÷èùåíèÿ
-		x_size = 15;// ðàçìåðû ïîëÿ (â áëîêàõ)
+		addKeyListener(this);// для клавиш
+		addDisposeListener(this);// для очищения экрана
+		x_size = 15;
 		y_size = 24;
-		grid_color = SWT.COLOR_GRAY;// ïî óìîë÷àíèþ ñåòêà åñòü
+		grid_color = SWT.COLOR_GRAY;// по умолчанию сетка есть
 		
-		backimage = new Image(getDisplay(), x_size * 22, y_size * 23);// ñîçäàåì îáúåêò êëàññà èçîáðàæåíèé
-		gc = new GC(backimage); // áóäåì ðèñîâàòü íà íåì
+		backimage = new Image(getDisplay(), x_size * 22, y_size * 23);// создаём объект класса изображений
+		gc = new GC(backimage); // будем рисовать на нём
 	}
 
-	// íà÷èíàåì èãðó
+	// функция начала игры
 	public void initializeGame() {
 		gameStarted = true;
 		score = 0;
-		blocks = new Block[x_size][y_size];// ñîçäàåì ìàññèâ äëÿ ïîëÿ
+		blocks = new Block[x_size][y_size];// создание массива для поля
 
-		// ñîçäàåì ñàìî ïîëå èç ïóñòûõ áëîêîâ 
+		// создание поля из пустых блоков
 		for (int i = 0; i < x_size; i++) {
 			for (int j = 0; j < y_size - 1; j++) {
 				blocks[i][j] = new Block( getDisplay().getSystemColor(SWT.COLOR_WHITE), false);
 			}
 		}
-		// ñîçäàåì íèæíþþ ãðàíèöó ïîëÿ (áëîêè ñ÷èòàþòñÿ çàïîëíåííûìè)
+		// создание нижней границы поля
 		for (int i = 0; i < x_size; i++) {
 			blocks[i][y_size - 1] = new Block(getDisplay().getSystemColor(grid_color), true);
 		}
-		// ñîçäàåì áîêîâûå ãðàíèöû ïîëÿ (áëîêè òàêæå ñ÷èòàþòñÿ çàïîëíåííûìè)
+		// создание боковых границ поля
 		for (int i = 0; i < y_size; i++) {
-			blocks[0][i] = new Block( getDisplay().getSystemColor(grid_color), true);
-			blocks[x_size - 1][i] = new Block( getDisplay().getSystemColor(grid_color), true);
+			blocks[0][i] = new Block(getDisplay().getSystemColor(grid_color), true);
+			blocks[x_size - 1][i] = new Block(getDisplay().getSystemColor(grid_color), true);
 		}
-		// ñîçäàåì ïåðâóþ ôèãóðó
+		// создание первой фигуры
 		createTetramino();
-		// çàïóñêàåì èãðîâîé öèêë
-		getDisplay().timerExec(0, this);//âûçûâàåò ìåòîä run
+		// запуск игрового цикла
+		getDisplay().timerExec(0, this); //вызов метода run
 	}
 	
-	//êîíåö èãðû
+	// конец игры
 		private void gameOver() {
-			getDisplay().timerExec(-1, this);//îòìåíÿåì âûïîëíåíèå
+			getDisplay().timerExec(-1, this); //отмена выполнения
 			gameStarted = false;
 		}
 		
-	// ñîçäàåì íîâûå ôèãóðû ñâåðõó ïîñåðåäèíå ýêðàíà
+	// создание новых фигур сверху посередине экрана
 	private void createTetramino() {
 		tetramino = new Tetramino(this, 7, 0);
 	}
 
-	// ô-ÿ, ïðåîáðàçóþùàÿ ôèãóðó â áëîêè
+	// функция преобразования фигуры в блоки
 	private void transformTetraminoToBlocks() {
 		for (int x = 0; x < 4; x++) {
 			for (int y = 0; y < 4; y++) {
 				if (tetramino.field[x][y] == true) {
-					blocks[tetramino.x + x][tetramino.y + y].setColor(tetramino.color);//áëîê ñòàíîâèòñÿ öâåòà ôèãóðû
-					blocks[tetramino.x + x][tetramino.y + y].setFilled(true);//òåïåðü áëîê íå ïóñòîé
+					blocks[tetramino.x + x][tetramino.y + y].setColor(tetramino.color);//блок становится цвета фигуры
+					blocks[tetramino.x + x][tetramino.y + y].setFilled(true);//и заполненный
 				}
 			}
 		}
 	}
 	
-	// ñáðîñ ôèãóðû âíèç
+	// функция сброса фигуры
 		private void fall() {
 			while (stepDown()) {
 			}
 		}
 	
-	// ïðîâåðêà, äîñòèãëà ëè ôèãóðà çàïîëíåííûõ áëîêîâ (ãðàíèö ïîëÿ èëè "ñòàðûõ" ôèãóð)
+	// проверка, достигла ли фигура заполненных блоков (границ поля или уже упавших фигур)
 		private boolean isTouching(int x, int y) {
 			for (int i = 0; i < 4; i++) {
 				for (int j = 0; j < 4; j++) {
@@ -121,56 +121,56 @@ public class TetrisCanvas
 			return false;
 		}
 
-	private boolean stepDown() {//äâèãàéñÿ âíèç, ïîêà íå äîñòèã äíà (èëè äðóãèõ ôèãóð)
+	private boolean stepDown() { //движение вниз, пока не достигнуто дно (или другие фигуры)
 		if (!isTouching(0, 1)) {
 			tetramino.y++;
 			return true;
 		} else {
-			if (tetramino.y <= 3) {// game over, åñëè îñòàëîñü ìåíüøå 3-õ ñâîáîäíûõ ïîëîñ
+			if (tetramino.y <= 3) {// game over, если осталось меньше 3х свободных полос
 				gameOver();
 				return false;
 			}
-			transformTetraminoToBlocks();// ïðåîáðàçóåì ôèãóðó â "íåàêòèâíûå" áëîêè, åñëè äîñòèãëè äíà
-			createTetramino();// âûçûâàåì íîâóþ ôèãóðó
+			transformTetraminoToBlocks(); // преобразуем фигуру в неактивные блоки, если достигли дна
+			createTetramino(); // вызываем новую фигуру
 			return false;
 		}
 	}
-	private void stepLeft() {//äâèãàéñÿ âëåâî, ïîêà íå äîñòèã ñòåíû (èëè äðóãèõ ôèãóð)
+	private void stepLeft() {// движение влево до достижения стены или других фигур
 		if (!isTouching(-1, 0)) {
 			tetramino.x--;
 		}
 	}
-	private void stepRight() {//àíàëîãè÷íî âïðàâî
+	private void stepRight() {// вправо
 		if (!isTouching(1, 0)) {
 			tetramino.x++;
 		}
 	}
 	
-	// î÷èùåíèå çàïîëíåííîé ëèíèè è ñìåùåíèå îñòàëüíûõ íà îäèí áëîê âíèç
+	// очищение заполненной линии и смещение остальных блоков на 1 вниз
 	private void clearFullLine(int current) {
 		for (int i = current; i > 0; i--) {
 			for (int j = 0; j < x_size; j++) {
-				blocks[j][i].setColor(blocks[j][i - 1].getColor());//ñìåùàåì öâåò íà áëîê âíèç
-				blocks[j][i].setFilled(blocks[j][i - 1].getFilled());// àíàëîãè÷íî ñ çàïîëíåííîñòüþ
+				blocks[j][i].setColor(blocks[j][i - 1].getColor());// смещаем цвет на блок вниз
+				blocks[j][i].setFilled(blocks[j][i - 1].getFilled());// заполненность
 			}
 		}
 	}
 
-	// ïðîâåðêà ëèíèè (çàïîëíèëàñü ëè?)
+	// проверка на заполненность линии
 	private boolean checkLine() {
 		for (int i = 0; i < y_size - 1; i++) {
-			boolean gap = false;// ïðîáåë
+			boolean gap = false;// пробел в линии 
 			for (int j = 1; j < x_size - 1; j++) {
 				if (!blocks[j][i].getFilled()) {
-					gap = true;//åñëè íàøëè ïðîáåë â ëèíèè
+					gap = true; // если нашли пробел
 				}
 			}
-			if (!gap) { // åñëè ïðîáåëîâ íåò, î÷èñòèòü òåêóùóþ ëèíèþ è óâåëè÷èòü ñ÷åò íà 1
+			if (!gap) { // если пробелов нет, очистить текущую линию и увеличить счёт на 1
 				clearFullLine(i);
 				score++;
 				if (score % 10 == 0) {
-					level++;// óâåëè÷èâàòü óðîâåíü êàæäûå 10 î÷êîâ
-					slow -= 30;// óìåíüøèòü çàäåðæêó (óâåëè÷èòü ñêîðîñòü ïàäåíèÿ ôèãóð)
+					level++;// увеличивать уровень каждые 10 очков
+					slow -= 30;// уменьшить задержку
 					if (slow < 1) slow = 1;
 				}
 			}
@@ -179,40 +179,40 @@ public class TetrisCanvas
 	}
 
 	public void run() {
-		stepDown();// äâèæåíèå âíèç
-		redraw();//ïåðåðèñîâêà ôèãóðû
+		stepDown(); // движение вниз
+		redraw(); //перерисовка
 		if (checkLine()) {
-			redraw();//óäàëåíèå ëèíèè
+			redraw();//удаление линии
 		}
-		getDisplay().timerExec(slow, this);// âûçîâ ñ çàìåäëåíèåì (îíî ïîñòåïåííî óìåíüøàåòñÿ, â çàâèñèìîñòè îò óðîâíÿ)
+		getDisplay().timerExec(slow, this);// вызов с замедлением
 	}
 	
-	// ðèñîâàíèå ôèãóð
+	// рисование фигур
 	private void drawTetramino(GC gc, Tetramino tetramino) {
 		for (int x = 0; x < 4; x++) {
 			for (int y = 0; y < 4; y++) {
 				if (tetramino.field[x][y] == true) 
 				{
-					gc.setBackground(tetramino.color);// öâåò ôèãóðû
-					gc.fillRectangle(// çàëèâàåò ïðÿìîóãîëüíèêè (áëîêè) óêàçàííûì â ïðåä.ñòðîêå öâåòîì
-						(tetramino.x + x) * 21 + 3,(tetramino.y + y) * 21 + 31,//êîîðäèíàòû ïî èêñó è ïî èãðåêó
-						19,19); // øèðèíà è âûñîòà
+					gc.setBackground(tetramino.color); // цвет фигуры
+					gc.fillRectangle(// заливает прямоугольники (блоки) указанным в предыдущей строке цветом
+						(tetramino.x + x) * 21 + 3,(tetramino.y + y) * 21 + 31,//координаты по x и y
+						19,19); // ширина и высота
 					}
 			}
 		}
 	}
 
-	// ñîáûòèÿ, ñâÿçàííûå ñ íàæàòèåì êëàâèø
+	// события, связанные с нажатием клавиш
 	public void keyPressed(KeyEvent e) {
-			if (e.character == 'í' || e.character == 'y') {// åñëè í/y, òî íà÷èíàåì íîâóþ èãðó (òåïåðü íå çàâèñèò îò ðàñêëàäêè)
+			if (e.character == 'н' || e.character == 'y') {// если 'н' или 'y', то начинаем новую игру
 				initializeGame();
 			}
-			if (e.character == ' ') { // åñëè ïðîáåë, òî ñáðàñûâàåì ôèãóðó âíèç
+			if (e.character == ' ') { // если пробел, то сброс фигуры
 				fall();
 				redraw();
-			} else if (e.keyCode == SWT.ARROW_UP) { // åñëè ââåðõ, òî âðàùàåì ôèãóðó
+			} else if (e.keyCode == SWT.ARROW_UP) { // если вверх, то вращаем фигуру
 				tetramino.rotate();
-				while (isTouching(0, 0)) {//÷òîáû ôèãóðà íå çàñòðåâàëà â ïðàâîé ãðàíèöå ïîëÿ
+				while (isTouching(0, 0)) {//чтобы фигура не застревала в правой границе поля
 					tetramino.x--;
 				}
 				redraw();
@@ -229,11 +229,11 @@ public class TetrisCanvas
 	
 	}
 
-	public void keyReleased(KeyEvent e) {//äåéñòâèÿ, ñâÿçàííûå ñ îòïóñêàíèåì êëàâèø
+	public void keyReleased(KeyEvent e) {//события, связанные с отпусканием клавиш
 		//
 	}
 
-	//îñâîáîæäàåì ðåñóðñû
+	// освобождение ресурсов
 	public void widgetDisposed(DisposeEvent e) {
 		getDisplay().timerExec(-1, this);
 		gc.dispose();
@@ -242,13 +242,11 @@ public class TetrisCanvas
 
 	public void paintControl(PaintEvent e) {
 		if (gameStarted) {
-			//int grid_color = SWT.COLOR_GRAY;
-			// çàïîëíåíèå ôîíà, åñëè èäåò èãðà
 
 			gc.setBackground(getDisplay().getSystemColor(grid_color));
-			gc.fillRectangle(getClientArea());//çàëèâàåì
+			gc.fillRectangle(getClientArea()); // заливка
 			
-			// ðèñîâàíèå áëîêîâ
+			// рисование блоков
 			for (int i = 0; i < x_size; i++) {
 				for (int j = 0; j < y_size; j++) {
 					gc.setBackground(blocks[i][j].getColor());
@@ -256,18 +254,16 @@ public class TetrisCanvas
 					}
 			}
 						
-			textInfo.setText("Óðîâåíü: " + level + " Ñ÷¸ò: " + score + "");//èí-öèÿ î òåêóùåì óðîâíå è ñ÷åòå
+			textInfo.setText("Óðîâåíü: " + level + " Ñ÷¸ò: " + score + ""); // информация о текущем уровне и счёте
 
-			// ôèãóðû
+			// рисование фигур 
 			drawTetramino(gc, tetramino);
-		} else {// åñëè èãðà îêîí÷åíà
+		} else {// если игра окончена
 			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_DARK_CYAN));
 			gc.fillRectangle(getClientArea());
 			textInfo.setText("Èòîãîâûé ñ÷åò: " + score);
 		}
 		
 		if (e != null)
-		e.gc.drawImage(backimage, 0, 0);//îòðèñîâûâàåì
-	}
-
+		e.gc.drawImage(backimage, 0, 0); //отрисовываем 
 }
