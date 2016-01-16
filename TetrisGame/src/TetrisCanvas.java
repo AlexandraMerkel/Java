@@ -250,7 +250,7 @@ public class TetrisCanvas
 			for (int i = 0; i < x_size; i++) {
 				for (int j = 0; j < y_size; j++) {
 					gc.setBackground(blocks[i][j].getColor());
-					gc.fillRectangle(i * 21 + 3, j * 21 + + 31, 19, 19);
+					gc.fillRectangle(i * 21 + 3, j * 21 + 31, 19, 19);
 					}
 			}
 						
