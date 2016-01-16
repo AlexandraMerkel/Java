@@ -12,37 +12,37 @@ public class TetrisGame extends Shell {
 	public static void main(String args[]) {
 	
 		Display display = new Display();
-		TetrisGame shell = new TetrisGame(display, SWT.TITLE | SWT.CLOSE | SWT.MIN );//êíîïî÷êè ñâåðíóòü, çàêðûòü
+		TetrisGame shell = new TetrisGame(display, SWT.TITLE | SWT.CLOSE | SWT.MIN ); // верхнее меню
 		
 		shell.open();
 		shell.layout();
 		
 		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())//÷èòàåò ñîáûòèÿ èç î÷åðåäè ñîîáùåíèé
+			if (!display.readAndDispatch())// читает события из очереди сообщений
 				display.sleep();
 		}
 		display.dispose();
 }
-		public TetrisGame(Display display, int style) { // êîíñòðóêòîð
-		super(display, style); // âûçîâ êîíñòðóêòîðà ñóïåðêëàññà
-		createÑontentsofWindow();
+		public TetrisGame(Display display, int style) { 
+		super(display, style); // вызов конструктора суперкласса
+		createContentsofWindow();
 	}
-		// çàäàåì âíåøíèé âèä îêíà èãðû
-		protected void createÑontentsofWindow() {
-		setBounds(250, 50, 335, 595);//ïîëîæåíèå è ðàçìåðû îêíà
+		// задаём внешний вид окна
+		protected void createContentsofWindow() {
+		setBounds(250, 50, 335, 595); //положение и размеры окна
 		setText("Tetris Game!");
 				
 		setLayout(new GridLayout());
 
 		tetris = new TetrisCanvas(this);
-		tetris.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));//çàïîëíåíèå ïî ãîðèçîíòàëè è âåðòàêàëè 
-
+		tetris.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true)); //заполнение по горизонтали и вертикали
+		
 		menu = new TetrisMenu(this);
 		menu.createMenu(this, tetris);
 	}
 	
 	@Override
 	protected void checkSubclass() {
-		// ïåðåîïðåäåëÿåì ìåòîä  (îòêëþ÷àåì ïðîâåðêó íà ïîäêëàññû)
+		// переопределяем метод (отключаем проверку на подклассы)
 	}
 }
