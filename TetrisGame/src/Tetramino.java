@@ -2,28 +2,28 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 
-public class Tetramino { // класс цельной фигуры
+public class Tetramino { // РєР»Р°СЃСЃ С†РµР»СЊРЅРѕР№ С„РёРіСѓСЂС‹
 
 	public int x;
 	public int y;
 	public Color color;
-	private Composite figure;// для управления
+	private Composite figure; // РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ 
 
-	// создаем область-массив для будущих фигур (одна фигура состоит из 4-х маленьких блоков)
+	// СЃРѕР·РґР°С‘Рј РѕР±Р»Р°СЃС‚СЊ - РјР°СЃСЃРёРІ РґР»СЏ Р±СѓРґСѓС‰РёС… С„РёРіСѓСЂ
 	boolean[][] field;
 
-	Tetramino(Composite new_figure, int new_x, int new_y) { // конструктор
+	Tetramino(Composite new_figure, int new_x, int new_y) { 
 		x = new_x;
 		y = new_y;
 		figure = new_figure;
 		createTetramino();
 	}
 
-	// ф-я вращения фигуры 
+	// С„СѓРЅРєС†РёСЏ РІСЂР°С‰РµРЅРёСЏ С„РёРіСѓСЂС‹
 	public void rotate() {
-		boolean[][] new_field1 = new boolean[4][4];//доп. массивы
+		boolean[][] new_field1 = new boolean[4][4]; //РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РјР°СЃСЃРёРІС‹
 		boolean[][] new_field2 = new boolean[4][4];
-		// цикл вращения
+		// С†РёРєР» РІСЂР°С‰РµРЅРёСЏ
 		for (int i = 0; i < 4; i++) { // 
 			for (int j = 0; j < 4; j++) {
 				new_field1[3 - j][i] = field[i][j];
@@ -31,15 +31,15 @@ public class Tetramino { // класс цельной фигуры
 		}
 		field = new_field1;
 		
-		int shift = 3;// сдвиг
+		int shift = 3; // СЃРґРІРёРі
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
-				if (i < shift  && field[i][j]) {//если блок заполнен,то изменяем переменную сдвига
+				if (i < shift  && field[i][j]) { //РµСЃР»Рё Р±Р»РѕРє Р·Р°РїРѕР»РЅРµРЅ, С‚Рѕ РёР·РјРµРЅСЏРµРј РїРµСЂРµРјРµРЅРЅСѓСЋ СЃРґРІРёРіР° 
 					shift = i;
 				}
 			}
 		}
-		// сдвиг фигуры наверх(т.к. из-за вращения она "уехала" вниз)
+		// СЃРґРІРёРі С„РёРіСѓСЂС‹ РІРІРµСЂС…, С‚.Рє. РёР·-Р·Р° РІСЂР°С‰РµРЅРёСЏ РѕРЅР° СЃРјРµСЃС‚РёР»Р°СЃСЊ РІРЅРёР·
 		for (int i = shift; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
 				new_field2[i - shift][j] = field[i][j];
@@ -48,12 +48,12 @@ public class Tetramino { // класс цельной фигуры
 		field = new_field2;
 	}
 	
-	// ф-я создания фигуры (рандомно)
+	// С„СѓРЅРєС†РёСЏ СЃРѕР·РґР°РЅРёСЏ СЃР»СѓС‡Р°Р№РЅРѕР№ С„РёРіСѓСЂС‹
 	private void createTetramino() {
 		field = new boolean[4][4];
-		int form = (int) Math.ceil(Math.random() * 7); // рандом вернет случайное число в диапазоне [0,1)*7=[0;7), ceil сделает округление сверху
+		int form = (int) Math.ceil(Math.random() * 7); //СЂР°РЅРґРѕРј РІРµСЂРЅС‘С‚ СЃР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ РІ РґРёР°РїР°Р·РѕРЅРµ  [0,1)*7=[0;7), ceil СЃРґРµР»Р°РµС‚ РѕРєСЂСѓРіР»РµРЅРёРµ СЃРІРµСЂС…Сѓ
 	
-		// кубик
+		// РєРІР°РґСЂР°С‚
 		if (form == 1) {
 			field[0][0] = true;
 			field[0][1] = true;
@@ -61,7 +61,7 @@ public class Tetramino { // класс цельной фигуры
 			field[1][1] = true;
 			color = figure.getDisplay().getSystemColor(SWT.COLOR_YELLOW);
 		} 
-		// Т перевернутая
+		// T РїРµСЂРµРІС‘СЂРЅСѓС‚Р°СЏ
 		else if (form == 2) {
 			field[0][1] = true;
 			field[1][1] = true;
@@ -69,7 +69,7 @@ public class Tetramino { // класс цельной фигуры
 			field[1][0] = true;
 			color = figure.getDisplay().getSystemColor(SWT.COLOR_MAGENTA);
 		} 
-		// Z (отображенная)
+		// Z (РѕС‚РѕР±СЂР°Р¶С‘РЅРЅР°СЏ)
 		else if (form == 3) {
 			field[0][0] = true;
 			field[1][0] = true;
@@ -77,7 +77,7 @@ public class Tetramino { // класс цельной фигуры
 			field[2][1] = true;
 			color = figure.getDisplay().getSystemColor(SWT.COLOR_RED);
 		} 
-		// Г набоку (хвостик справа)
+		// Р“ РЅР° Р±РѕРєСѓ (С…РІРѕСЃС‚РёРє СЃРїСЂР°РІР°)
 		else if (form == 4) {
 			field[0][1] = true;
 			field[1][1] = true;
@@ -85,7 +85,7 @@ public class Tetramino { // класс цельной фигуры
 			field[2][0] = true;
 			color = figure.getDisplay().getSystemColor(SWT.COLOR_DARK_YELLOW);
 		} 
-		// Г набоку (хвостик слева)
+		// Р“ РЅР° Р±РѕРєСѓ (С…РІРѕСЃС‚РёРє СЃР»РµРІР°)
 		else if (form == 5) {
 			field[0][0] = true;
 			field[0][1] = true;
@@ -101,7 +101,7 @@ public class Tetramino { // класс цельной фигуры
 			field[2][0] = true;
 			color = figure.getDisplay().getSystemColor(SWT.COLOR_GREEN);
 		}
-		// палка (I)	
+		// РїР°Р»РєР°	
 		else if (form == 7) {
 				field[0][0] = true;
 				field[0][1] = true;
