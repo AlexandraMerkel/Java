@@ -12,48 +12,48 @@ public class TetrisMenu {
 	
 	public void createMenu(TetrisGame shell, TetrisCanvas tetris){
 	
-	Menu menuBar = new Menu(shell, SWT.BAR);// ñîçäàåì ïàíåëüêó äëÿ ìåíþ
-	MenuItem cascadeFileMenu = new MenuItem(menuBar, SWT.CASCADE);// ñîçäàåì ïóíêòû ìåíþ íà âåðõíåé ïàíåëè
+	Menu menuBar = new Menu(shell, SWT.BAR); // Ð¿Ð°Ð½ÐµÐ»ÑŒ Ð´Ð»Ñ Ð¼ÐµÐ½ÑŽ
+	MenuItem cascadeFileMenu = new MenuItem(menuBar, SWT.CASCADE);// Ð¿ÑƒÐ½ÐºÑ‚Ñ‹ Ð´Ð»Ñ Ð¼ÐµÐ½ÑŽ Ð² Ð²ÐµÑ€Ñ…Ð½ÐµÐ¹ Ð¿Ð°Ð½ÐµÐ»Ð¸
 	MenuItem cascadeViewMenu = new MenuItem(menuBar, SWT.CASCADE);
 	MenuItem cascadeHelpMenu = new MenuItem(menuBar, SWT.CASCADE);
-    cascadeFileMenu.setText("&Ôàéë");
-    cascadeViewMenu.setText("&Âèä");
-    cascadeHelpMenu.setText("&Ñïðàâêà");
+    cascadeFileMenu.setText("&Ð¤Ð°Ð¹Ð»");
+    cascadeViewMenu.setText("&Ð’Ð¸Ð´");
+    cascadeHelpMenu.setText("&Ð¡Ð¿Ñ€Ð°Ð²ÐºÐ°");
     
-    Menu fileMenu = new Menu(shell, SWT.DROP_DOWN);// äåëàåì âûïàäàþùèå ìåíþøêè
+    Menu fileMenu = new Menu(shell, SWT.DROP_DOWN);// Ð²Ñ‹Ð¿Ð°Ð´Ð°ÑŽÑ‰Ð¸Ðµ Ð¼ÐµÐ½ÑŽ
     Menu viewMenu = new Menu(shell, SWT.DROP_DOWN);
     Menu helpMenu = new Menu(shell, SWT.DROP_DOWN);
-    cascadeFileMenu.setMenu(fileMenu);// ïðèêðåïëÿåì ê êíîïêàì íà ïàíåëè
+    cascadeFileMenu.setMenu(fileMenu);// Ð¿Ñ€Ð¸ÐºÑ€ÐµÐ¿Ð»ÐµÐ½Ð¸Ðµ Ðº Ð¿ÑƒÐ½ÐºÑ‚Ð°Ð¼ Ð¼ÐµÐ½ÑŽ Ð½Ð° Ð²ÐµÑ€Ñ…Ð½ÐµÐ¹ Ð¿Ð°Ð½ÐµÐ»Ð¸
     cascadeViewMenu.setMenu(viewMenu);
     cascadeHelpMenu.setMenu(helpMenu);
-    // ôàéë
-    MenuItem newGameItem = new MenuItem(fileMenu, SWT.PUSH);// äåëàåì ïóíêòû âûïàäàþùèõ ìåíþ
+    // Ñ„Ð°Ð¹Ð»
+    MenuItem newGameItem = new MenuItem(fileMenu, SWT.PUSH);// Ð¿ÑƒÐ½ÐºÑ‚Ñ‹ Ð²Ñ‹Ð¿Ð°Ð´Ð°ÑŽÑ‰Ð¸Ñ… Ð¼ÐµÐ½ÑŽ
     MenuItem statItem = new MenuItem(fileMenu, SWT.PUSH);
     MenuItem exitItem = new MenuItem(fileMenu, SWT.PUSH);
-    newGameItem.setText("&Íîâàÿ èãðà");
-    statItem.setText("&Ñòàòèñòèêà");
-    exitItem.setText("&Âûõîä");
+    newGameItem.setText("&ÐÐ¾Ð²Ð°Ñ Ð¸Ð³Ñ€Ð°");
+    statItem.setText("&Ð¡Ñ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÐ°");
+    exitItem.setText("&Ð’Ñ‹Ñ…Ð¾Ð´");
     
-    // âèä
+    // Ð²Ð¸Ð´
     MenuItem themecolorItem = new MenuItem(viewMenu, SWT.CASCADE);
-    themecolorItem.setText("&Ñåòêà");
-    Menu selectionMenu = new Menu(shell, SWT.DROP_DOWN);// äåëàåì ïîäìåíþ ñ âûáîðîì "òåìû"
+    themecolorItem.setText("&Ð¡ÐµÑ‚ÐºÐ°");
+    Menu selectionMenu = new Menu(shell, SWT.DROP_DOWN); // Ð¿Ð¾Ð´Ð¼ÐµÐ½ÑŽ Ñ Ð²Ñ‹Ð±Ð¾Ñ€Ð¾Ð¼ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ñ ÑÐµÑ‚ÐºÐ¸
     themecolorItem.setMenu(selectionMenu);
     
     MenuItem visibleGridItem = new MenuItem(selectionMenu, SWT.PUSH);
-    visibleGridItem.setText("&Ïîêàçàòü");
+    visibleGridItem.setText("&ÐŸÐ¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ");
     MenuItem invisibleGridItem = new MenuItem(selectionMenu, SWT.PUSH);
-    invisibleGridItem.setText("&Ñêðûòü");
+    invisibleGridItem.setText("&Ð¡ÐºÑ€Ñ‹Ñ‚ÑŒ");
     
-   	// ñïðàâêà    
+   // ÑÐ¿Ñ€Ð°Ð²ÐºÐ° 
     MenuItem helpItem = new MenuItem(helpMenu, SWT.PUSH);
     MenuItem infoItem = new MenuItem(helpMenu, SWT.PUSH);
-    helpItem.setText("&Ïðîñìîòðåòü ñïðàâêó");
-    infoItem.setText("&Î ïðîãðàììå");
+    helpItem.setText("&ÃÃ°Ã®Ã±Ã¬Ã®Ã²Ã°Ã¥Ã²Ã¼ Ã±Ã¯Ã°Ã Ã¢ÃªÃ³");
+    infoItem.setText("&ÃŽ Ã¯Ã°Ã®Ã£Ã°Ã Ã¬Ã¬Ã¥");
    
-    shell.setMenuBar(menuBar);// ïðèêðåïèëè ìåíþ ê îêíó
+    shell.setMenuBar(menuBar);// Ð¿Ñ€Ð¸ÐºÑ€ÐµÐ¿Ð¸Ð»Ð¸ Ð¼ÐµÐ½ÑŽ Ðº Ð¾ÐºÐ½Ñƒ
     
-    // îáðàáîòêà äåéñòâèé,ñâÿçàííûõ ñ ìåíþ
+    // Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ð¹, ÑÐ²ÑÐ·Ð°Ð½Ð½Ñ‹Ñ… Ñ Ð¼ÐµÐ½ÑŽ
     
     	newGameItem.addListener(SWT.Selection, event-> {
     		tetris.initializeGame();	
