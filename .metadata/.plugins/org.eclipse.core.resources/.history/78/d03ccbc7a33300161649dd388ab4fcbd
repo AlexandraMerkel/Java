@@ -1,0 +1,686 @@
+package ru.game.client;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.concurrent.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
+
+import ru.game.message.Message;
+import ru.game.message.Message.Type;
+import ru.game.client.Tetramino.Shape;
+
+
+public class TetrisCanvas extends Canvas implements PaintListener, Runnable, KeyListener, DisposeListener {
+
+	//private Message 		    keyEvent;
+	private Message 		    message;
+	
+    //private boolean 			available   = false; // связался ли игрок с сервером
+	
+	public int form = (int) Math.ceil(Math.random() * 7);
+   	public int gameID = 1; // идентификатор игрока (1 - первый, 2 - второй)
+    private Tetramino tetramino;
+	private volatile boolean gameStarted;// идет ли игра
+	public boolean isGameStarted() {
+		return gameStarted;
+	}
+
+	public void setGameStarted(boolean gameStarted) {
+		this.gameStarted = gameStarted;
+	}
+
+	//private boolean gameStarted2 = false;// идет ли игра
+	private int speed = 0; // cкорость игры (милисекунды)
+	// private int slow = 500 - speed;// замедление (чем больще скорость, тем
+	// меньше замедление)
+	private int level; // уровень (вляет на замедление, т.е. на скорость падения
+						// фигур)
+	private final int X_SIZE = 24; // размеры поля в блоках
+	private final int Y_SIZE = 24;
+	private int score;// очки
+	private int gridColor;// цвет фона (для сетки)
+	private Image backimage;// объект класса изображений
+	private GC gc; // для рисования на изображении
+	private Block[][] blocks;
+	private Text textInfo;// инф-я о текущем уровне и счете
+	
+	//private BlockingQueue<Tetramino.Shape> figuresQueue = new LinkedBlockingQueue<Tetramino.Shape>(); // очередь
+																										// для
+																										// фигур
+	//private BlockingQueue<Integer> figuresQueue = new LinkedBlockingQueue<Integer>();
+	private Shape buffer = Tetramino.Shape.I; // хранит текущий выбор второго игрока
+	
+	private Shape[] figuresChoose = new Shape[3]; // массив
+	//private int[] figuresChoose = new int[3]; // массив
+																		// для
+																		// текуших
+																		// фигур
+																		// на
+																		// выбор
+	boolean choose; // сделал ли выбор 2-й игрок (если нет, фигура генерируется
+					// рандомно)
+	
+	private Client client;
+	
+	// конструктор 
+	public TetrisCanvas(Composite parent) {
+		super(parent, SWT.CENTER);// вызываем конструктор суперкласса
+		gameStarted = false;
+		addPaintListener(this); // лисенер для рисования
+		setLayout(new GridLayout());
+
+		textInfo = new Text(this, SWT.NONE);
+		textInfo.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));// заполнение
+																					// по
+																					// горизонтали,
+																					// сверху
+
+		addKeyListener(this);// лисенер для клавиш
+		addDisposeListener(this);// для очищения
+		addListener(SWT.KeyDown,   event 	-> onKeyDown(event));
+
+		gridColor = SWT.COLOR_GRAY;// по умолчанию сетка есть
+
+		backimage = new Image(getDisplay(), X_SIZE * 22, Y_SIZE * 23);// создаем
+																		// объект
+																		// класса
+																		// изображений
+		gc = new GC(backimage); // будем рисовать на нем
+	}
+
+	public void drawWaiting() 
+	{
+		gameID = 1;
+		
+		// Тут дб отрисовка надписи, что ждем
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					client = new Client("127.0.0.1", 5876);
+					} catch (UnknownHostException e1) {
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				System.out.println("Waiting another client...");
+				try {
+							client.createSession();
+						} catch (ClassNotFoundException e1) {
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						//Создаем новую игру и ждем ее начатия
+						try {
+								message = client.readMessage();
+								System.out.println("income message - " + message.getMessageType());
+						} catch (ClassNotFoundException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						if (message.getMessageType().equals(Type.STARTED))
+						Display.getDefault().asyncExec(new Runnable() {
+							
+							@Override
+							public void run() {
+								try {
+									initializeGame();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+						});
+					}
+				}).start();
+	}
+	
+	public void drawBlocks() {
+		blocks = new Block[X_SIZE][Y_SIZE];// создаем массив для поля
+
+		// создаем само поле из пустых блоков
+		for (int i = 0; i < X_SIZE; i++) {
+			for (int j = 0; j < Y_SIZE - 1; j++) {
+				blocks[i][j] = new Block(getDisplay().getSystemColor(SWT.COLOR_WHITE), false);
+			}
+		}
+		// создаем горизонтальные границы поля
+		for (int i = 0; i < X_SIZE; i++) {
+			blocks[i][Y_SIZE - 1] = new Block(getDisplay().getSystemColor(gridColor), true);
+		}
+
+		for (int i = 17; i < X_SIZE; i++) {
+			blocks[i][7] = new Block(getDisplay().getSystemColor(gridColor), true);
+			blocks[i][15] = new Block(getDisplay().getSystemColor(gridColor), true);
+		}
+
+		// создаем вертикальные границы поля
+		for (int i = 0; i < Y_SIZE; i++) {
+			blocks[0][i] = new Block(getDisplay().getSystemColor(gridColor), true);
+			blocks[14][i] = new Block(getDisplay().getSystemColor(gridColor), true);
+			blocks[15][i] = new Block(getDisplay().getSystemColor(gridColor), true);
+			blocks[16][i] = new Block(getDisplay().getSystemColor(gridColor), true);
+			//blocks[25][i] = new Block(getDisplay().getSystemColor(gridColor), true);
+		}
+	}
+	
+	
+	public void drawSessionList(){
+		gameID = 2;
+		
+		//Отрисовка пустого списка
+		System.out.println("Second client");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					client = new Client("localhost",5876);
+				} catch (UnknownHostException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				// TODO Получаем список сессий
+				try {
+					client.joinSession(1);
+				} catch (ClassNotFoundException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				try {
+					client.sendMessage(new Message (Message.Type.JOIN, ""));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
+						message = client.readMessage();
+						System.out.println("income message - " + message.getMessageType());
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				if (message.getMessageType().equals(Type.STARTED))
+				Display.getDefault().asyncExec(new Runnable() {
+					
+					@Override
+					public void run() {
+						try {
+							joinGame();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+			}
+		}).start();
+	}
+	
+	
+	// начинаем новую игру
+	public void initializeGame() throws IOException {
+		gameStarted = true;
+		score = 0;
+		drawBlocks();
+		
+		getDisplay().timerExec(0, this);// вызывает метод run
+		// создаем 3 фигуры для выбора 2-му игроку
+		for (int i = 0; i < 3; i++) {
+			createTetraminoSelection(i);
+			transformTetraminoToBlocks();
+		}
+		//if (client.hasMessage())
+			//try {
+				//if (client.readMessage().getMessageType().equals(Message.Type.FORMNUMBER)){
+					//System.out.println("income message - " + message.getMessageType());
+					//buffer = (Shape)client.readMessage().getAdditionalData();
+					createTetramino(buffer);
+					//}
+// создаем первую фигуру для игрового поля (рандомно)
+//createNullTetramino();
+			//} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+		// запускаем игровой цикл
+		//getDisplay().timerExec(0, this);// вызывает метод run
+	}
+	
+	// присоединяемся к существующей игре
+		public void joinGame() throws IOException {
+						
+			gameStarted = true;
+			score = 0;
+			drawBlocks();
+			// создаем 3 фигуры для выбора 2-му игроку
+			for (int i = 0; i < 3; i++) {
+				createTetraminoSelection(i);
+				transformTetraminoToBlocks();
+			}
+			// создаем первую фигуру для игрового поля (рандомно)
+			createNullTetramino();
+			
+			// запускаем игровой цикл
+			getDisplay().timerExec(0, this); // вызывает метод run
+		}
+
+	// ф-я окончания игры
+	private void gameOver() {
+		getDisplay().timerExec(-1, this); // отменяем выполнение
+		gameStarted = false;
+		choose = false;
+		//figuresQueue.clear(); // очищаем очередь фигур
+	}
+
+	// ф-я управления видимостью сетки
+	public void isGridEnabled(boolean grid) {
+		if (grid)
+			gridColor = SWT.COLOR_GRAY;
+		else
+			gridColor = SWT.COLOR_WHITE;
+	}
+
+	// ф-я создания "нулевой" (первой, рандомной) фигуры
+	private void createNullTetramino() throws IOException {
+		tetramino = new Tetramino(this, 7, 0);
+		buffer = Tetramino.Shape.I;
+		Message message = new Message(Type.FORMNUMBER, "");
+		message.setAdditionalData(buffer);
+		client.sendMessage(message);
+	}
+	
+	
+	// ф-я создания новых фигур сверху посередине игрового поля в зависимости от shape'а (сообщения пришедшего от 2-го игрока)
+	private void createTetramino(Shape shape) {
+		tetramino = new Tetramino(this, shape, 7, 0);
+	}
+
+
+	// ф-я создания новых РАЗНЫХ фигур на выбор для 2-го игрока (и записывания их в массив)
+	private void createTetraminoSelection(int i) {
+
+		if (i == 0) {
+			tetramino = new Tetramino(this, 19, i * 8 + 2);
+			figuresChoose[i] = tetramino.shape;
+		}
+		if (i == 1) {
+			tetramino = new Tetramino(this, 19, i * 8 + 2);
+			while (tetramino.shape == figuresChoose[0]) {
+				tetramino = new Tetramino(this, 19, i * 8 + 2);
+			}
+			figuresChoose[i] = tetramino.shape;
+		}
+		if (i == 2) {
+			tetramino = new Tetramino(this, 19, i * 8 + 2);
+			while (tetramino.shape == figuresChoose[0] || tetramino.shape == figuresChoose[1]) {
+				tetramino = new Tetramino(this, 19, i * 8 + 2);
+			}
+			figuresChoose[i] = tetramino.shape;
+		}
+	}
+
+	// очищение полей, для выбора фигур
+	private void clearTetraminoSelection() {
+		for (int i = 17; i < X_SIZE - 1; i++) {
+			for (int j = 1; j < Y_SIZE - 1; j++) {
+				if (j != 7 && j != 15 && blocks[i][j].getFilled()) {
+					blocks[i][j] = new Block(getDisplay().getSystemColor(SWT.COLOR_WHITE), false);
+				}
+			}
+		}
+	}
+
+	// ф-я, преобразующая активную фигуру в блоки поля
+	private void transformTetraminoToBlocks() {
+		for (int x = 0; x < 4; x++) {
+			for (int y = 0; y < 4; y++) {
+				if (tetramino.field[x][y] == true) {
+					blocks[tetramino.x + x][tetramino.y + y].setColor(tetramino.color);// блок
+																						// становится
+																						// цвета
+																						// фигуры
+					blocks[tetramino.x + x][tetramino.y + y].setFilled(true);// теперь
+																				// блок
+																				// не
+																				// пустой
+				}
+			}
+		}
+	}
+
+	// сброс фигуры вниз
+	private void fall() {
+		while (stepDown()) {
+		}
+	}
+
+	// проверка, достигла ли фигура заполненных блоков (границ поля или "старых"
+	// фигур)
+	private boolean isTouching(int x, int y) {
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				if (tetramino.field[i][j] == true && tetramino.x + i + x >= 0
+						&& blocks[tetramino.x + i + x][tetramino.y + j + y].getFilled() == true) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean stepDown() {// фигура двигается вниз, пока не достигнет дна (или других "старых"
+								// фигур)
+		if (!isTouching(0, 1)) {
+			tetramino.y++;
+			return true;
+		} else { // если фигура достигла дна, то:
+			if (tetramino.y <= 3) {// game over, если осталось меньше 3-х
+									// свободных полос
+				gameOver();
+				return false;
+			}
+			if (choose == false) { // если 2-й игрок не сделал выбор, то фигура
+									// добавляется рандомно
+				int random = (int) Math.floor(Math.random() * 3);
+					//figuresQueue.put(figuresChoose[random]);
+					buffer = figuresChoose[random];
+			}
+			transformTetraminoToBlocks();// преобразуем фигуру в "неактивные"
+											// блоки, если достигли дна
+
+			choose = false; // "обнуляем" выбор 2-го игрока
+			clearTetraminoSelection(); // очищаем поле дял выбора фигур
+			for (int i = 0; i < 3; i++) { // вызываем новые фигуры для выбора
+				createTetraminoSelection(i);
+				transformTetraminoToBlocks();
+			}
+			//createTetramino(figuresQueue.poll());// вызываем новую фигуру на игровое поле !!!!!!!! в скобочках элеменет перечисления, полученный от 2-го игркоа
+			createTetramino(buffer);
+			return false;
+		}
+	}
+
+	private void stepLeft() {// двигайся влево, пока не достиг стены (или других
+								// фигур)
+		if (!isTouching(-1, 0)) {
+			tetramino.x--;
+		}
+	}
+
+	private void stepRight() {// аналогично вправо
+		if (!isTouching(1, 0)) {
+			tetramino.x++;
+		}
+	}
+
+	// очищение заполненной линии и смещение остальных на один блок вниз
+	private void clearFullLine(int current) {
+		for (int i = current; i > 0; i--) {
+			for (int j = 0; j < X_SIZE-10; j++) {
+				blocks[j][i].setColor(blocks[j][i - 1].getColor());// смещаем
+																	// цвет на
+																	// блок вниз
+				blocks[j][i].setFilled(blocks[j][i - 1].getFilled());// аналогично
+																		// с
+																		// заполненностью
+			}
+		}
+	}
+
+	// проверка линии (заполнилась ли?)
+	private void checkLine() {
+		boolean gap = false;
+		for (int i = 0; i < Y_SIZE - 1; i++) {
+			gap = false;// пробел
+			for (int j = 1; j < X_SIZE - 10; j++) {
+				if (!blocks[j][i].getFilled()) {
+					gap = true;// если нашли пробел в линии
+				}
+			}
+			if (!gap) { // если пробелов нет, очистить текущую линию и увеличить
+						// счет на 1
+				clearFullLine(i);
+				scoreUp();
+
+			}
+		}
+	}
+
+	// ф-я увеличения кол-ва очков
+	private void scoreUp() {
+		score += 10;
+		if (score % 100 == 0) {
+			level++;// увеличивать уровень каждые 100 очков
+			speedUp();
+		}
+	}
+
+	// ф-я увеличения скорости игры
+	private void speedUp() {
+		speed += 30;
+		// slow -= 30;// уменьшить задержку (увеличить скорость падения фигур)
+		// if (slow < 1)
+		// slow = 1;
+		if (speed > 499)
+			speed = 499;
+	}
+
+	// обработка сообщений
+	private void processingClient(Message answer){
+		if(answer.getMessageType().equals(Type.KEYNUMBER)) {
+			KeyEvent key = (KeyEvent) answer.getAdditionalData();
+			keyPressed(key);
+		}
+		
+		else if(answer.getMessageType().equals(Type.FORMNUMBER)) {
+			createTetramino((Shape) answer.getAdditionalData());
+		}
+			
+	}
+	
+	public void run() {
+		if (gameStarted) {
+			iteration();
+		}
+	}
+	
+	public void iteration()
+	{
+		if (gameID == 1) {
+			try {
+				if (client.hasMessage()) {
+					try {
+						message = client.readMessage();
+					} catch (ClassNotFoundException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					processingClient(message);
+					}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			stepDown();// движение вниз
+			redraw();// перерисовка фигуры
+			checkLine(); // проверка заполненных линиий
+			getDisplay().timerExec(500-speed, this);// вызов с замедлением (оно
+											// постепенно уменьшается, в
+											// зависимости от уровня)
+		}
+		else if (gameID == 2) {
+			try {
+				if (client.hasMessage()) {
+					try {
+						message = client.readMessage();
+					} catch (ClassNotFoundException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					processingClient(message);
+					}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			stepDown();// движение вниз
+			redraw();// перерисовка фигуры
+			checkLine(); // проверка заполненных линиий
+			getDisplay().timerExec(500-speed, this);// вызов с замедлением (оно
+											// постепенно уменьшается, в
+											// зависимости от уровня)
+		}
+	}
+	
+	// рисование фигур
+	private void drawTetramino(GC gc, Tetramino tetramino) {
+		for (int x = 0; x < 4; x++) {
+			for (int y = 0; y < 4; y++) {
+				if (tetramino.field[x][y] == true) {
+					gc.setBackground(tetramino.color);// цвет фигуры
+					gc.fillRectangle(// заливает прямоугольники (блоки)
+										// указанным в пред.строке цветом
+							(tetramino.x + x) * 21 + 3, (tetramino.y + y) * 21 + 31, // координаты
+																						// по
+																						// иксу
+																						// и
+																						// по
+																						// игреку
+							19, 19); // ширина и высота
+				}
+			}
+		}
+	}
+	
+	// отправлять сообщения при нажатии
+	private void onKeyDown(Event e) {
+		int key = e.keyCode;
+    }
+
+	// события, связанные с нажатием клавиш (зависят от id игрока!)
+	public void keyPressed(KeyEvent key) {
+		if (gameID  == 1) { // если id нечетный, действия 1-го игрока
+			if (key.character == ' ') { // если пробел, то сбрасываем фигуру
+										// вниз
+				fall();
+				redraw();
+			} else if (key.keyCode == SWT.ARROW_UP) { // если вверх, то вращаем
+														// фигуру
+				tetramino.rotate();
+				while (isTouching(0, 0)) {// чтобы фигура не застревала в правой
+											// границе поля
+					tetramino.x--;
+				}
+				redraw();
+			} else if (key.keyCode == SWT.ARROW_DOWN) {
+				stepDown();
+				redraw();
+			} else if (key.keyCode == SWT.ARROW_LEFT) {
+				stepLeft();
+				redraw();
+			} else if (key.keyCode == SWT.ARROW_RIGHT) {
+				stepRight();
+				redraw();
+			}
+		}
+		if (gameID == 2) { // если id четный, действия 2-го игрока
+			if (key.keyCode == SWT.ARROW_UP) { // если вверх, то выбираем 1-ю
+												// фигуру
+				if (choose == false) {
+					//figuresQueue.put(figuresChoose[0]); // кладем в очередь
+														// первую фигуру из
+														// массива
+					buffer = figuresChoose[0];
+					choose = true; // выбор сделан!
+				}
+				
+			} else if (key.keyCode == SWT.ARROW_DOWN) { // если вниз, то
+														// выбираем
+														// 3-ю
+														// фигуру
+				if (choose == false) {
+					buffer = figuresChoose[2];
+					//figuresQueue.put(figuresChoose[2]);
+					choose = true;
+				}
+
+			} else if (key.keyCode == SWT.ARROW_LEFT || key.keyCode == SWT.ARROW_RIGHT) { // если
+																							// вправо/влево,
+																							// то
+																							// выбираем
+																							// 2-ю
+																							// фигуру
+				if (choose == false) {
+					//figuresQueue.put(figuresChoose[1]);
+					buffer = figuresChoose[1];
+					choose = true;
+
+				}
+			}
+		}
+
+	}
+
+	public void keyReleased(KeyEvent e) {// действия, связанные с отпусканием
+											// клавиш
+		//
+	}
+
+	// освобождаем ресурсы
+	public void widgetDisposed(DisposeEvent e) {
+		getDisplay().timerExec(-1, this);
+		gc.dispose();
+		backimage.dispose();
+	}
+
+	public void paintControl(PaintEvent e) {
+		if (gameStarted) {
+			// заполнение фона, если идет игра
+			gc.setBackground(getDisplay().getSystemColor(gridColor));
+			gc.fillRectangle(getClientArea());// заливаем
+
+			// рисование блоков
+			for (int i = 0; i < X_SIZE; i++) {
+				for (int j = 0; j < Y_SIZE; j++) {
+					gc.setBackground(blocks[i][j].getColor());
+					gc.fillRectangle(i * 21 + 3, j * 21 + 31, 19, 19);
+				}
+			}
+
+			textInfo.setText("Уровень: " + level + " Счёт: " + score + "");// ин-ция
+																			// о
+																			// текущем
+																			// уровне
+																			// и
+																			// счете
+
+			// фигуры
+			drawTetramino(gc, tetramino);
+		} else {// если игра окончена
+			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_DARK_CYAN));
+			gc.fillRectangle(getClientArea());
+			textInfo.setText("Итоговый счет: " + score);
+		}
+
+		if (e != null)
+			e.gc.drawImage(backimage, 0, 0);// отрисовываем
+	}
+
+}
