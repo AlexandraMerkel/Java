@@ -1,0 +1,80 @@
+package ru.game.tetris.server;
+
+import java.util.ArrayList;
+import java.util.List;
+//import java.util.Random;
+
+
+import ru.game.message.Message;
+
+public class Session implements Runnable{
+	private List<Player> players = new ArrayList<>();
+	//private int sessionId = new Random().nextInt(65535);
+	private int sessionId = 1;
+	private int needPlayersToStart;
+	
+	public Session(int needPlayersToStart){
+		this.needPlayersToStart = needPlayersToStart;
+	}
+	
+	public Session(){
+		this(2);
+	}
+	
+	@Override
+	public void run() {
+		players.forEach(player->{
+			try {
+				player.sendMessage(new Message(Message.Type.STARTED, ""));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		System.out.println("session started");
+		boolean sessionAlive = true;
+		while(sessionAlive){
+			try {
+				for (Player player: players){
+					if (player.hasNewMessages()){
+						Message income = player.getMessage();
+						System.out.println("income message - " + income.getMessageType());
+						if (income.getMessageType() == Message.Type.CLOSE_SESSION){
+							sessionAlive = false;
+							break;
+						}
+						for (Player p: players){
+							if (p != player){
+								p.sendMessage(income);
+								System.out.println("message " + income.getMessageType() + " from " + players.indexOf(player)
+										+ " sent to "+ players.indexOf(p));
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				sessionAlive = false;
+				e.printStackTrace();
+			}
+		}
+		players.forEach(p -> {
+			try {
+				p.closeConnection();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		System.out.println("session closed");
+	}
+	
+	public void addPlayer(Player player){
+		players.add(player);
+	}
+	
+	public boolean readyToStart(){
+		return players.size() == needPlayersToStart;
+	}
+	
+	public Integer getSessionId(){
+		return sessionId;
+	}
+}

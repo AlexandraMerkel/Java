@@ -1,0 +1,86 @@
+package ru.game.client;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.Scanner;
+
+import ru.game.message.Message;
+import ru.game.message.Message.Type;
+
+public class Connect {
+
+	public ObjectOutputStream out = null;
+	public ObjectInputStream in = null;
+	public Socket socket = null;
+	public boolean flag = true;
+	//public int gameID;
+
+	public Connect() {
+
+		while (flag) {
+			try {
+				socket = new Socket("localhost", 1359);
+				out = new ObjectOutputStream(socket.getOutputStream());
+				in = new ObjectInputStream(socket.getInputStream());
+				sendMessage(new Message(Type.NEW_SESSION, "new session")); // создаем сессию
+				Message answer = getMessage();
+				
+				flag = false;
+			} catch (IOException e) {
+				System.out.println(
+						"Client:: Something happened. Cannot to set connection with server. I can to try again [yes = 1/no]");
+				Scanner scan = new Scanner(System.in);
+				int s = scan.nextInt();
+				if (s == 1) {
+					flag = true;
+					scan.close();
+				} else {
+					flag = false;
+					scan.close();
+					System.out.println("Client:: Game will be terminated! See you soon!");
+					e.printStackTrace();
+					System.exit(-1);
+				}
+			}
+		}
+	}
+
+	public void closeConnect() {
+		try {
+			socket.close();
+			System.out.println("Client:: Connection was closed successfully");
+		} catch (IOException e) {
+			System.out.println(
+					"Client:: Something happened. Cannot to close connection with server. Game will be terminated");
+			e.printStackTrace();
+		}
+	}
+
+	public void sendMessage(Message message) { // Mockito
+		try {
+			out.writeObject(message);
+		} catch (IOException | NullPointerException e) {
+			System.out.println("Client :: Something happened, message can not be sent. Game will be terminated");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+
+	public Message getMessage() {
+		Message answer = null;
+		try {
+			answer = (Message) in.readObject();
+		} catch (ClassNotFoundException | IOException e) {
+			System.out.println("Client :: Something happened, message can not be get. Game will be terminated");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		if (answer == null) {
+			System.out.println("Client :: The received message is null. Game will be terminated");
+			System.exit(-1);
+		}
+
+		return answer;
+	}
+}
