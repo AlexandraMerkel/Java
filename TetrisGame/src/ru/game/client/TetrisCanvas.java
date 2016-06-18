@@ -1,7 +1,11 @@
 package ru.game.client;
+
 import java.io.IOException;
-import java.net.UnknownHostException;
-//import java.util.concurrent.*;
+//import java.net.UnknownHostException;
+//import java.util.Collection;
+//import java.util.HashMap;
+//import java.util.Map;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -10,6 +14,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -23,30 +29,18 @@ import ru.game.message.Tetramino;
 import ru.game.message.Message.Type;
 import ru.game.message.Tetramino.Shape;
 
-
 public class TetrisCanvas extends Canvas implements PaintListener, Runnable, KeyListener, DisposeListener {
 
-	//private Message 		    keyEvent;
-	private Message 		    message;
-	
-    //private boolean 			available   = false; // связался ли игрок с сервером
-	
-	public int form = (int) Math.ceil(Math.random() * 7);
-   	public int gameID = 1; // идентификатор игрока (1 - первый, 2 - второй)
-    private Tetramino tetramino;
+	private Tetramino tetramino;
+	private Client client;
+	private Message message;
+
 	private volatile boolean gameStarted;// идет ли игра
-	public boolean isGameStarted() {
-		return gameStarted;
-	}
-
-	public void setGameStarted(boolean gameStarted) {
-		this.gameStarted = gameStarted;
-	}
-
-	//private boolean gameStarted2 = false;// идет ли игра
+	private volatile boolean errorWindow = false; // сигнал о появлении окна с
+													// ошибкой
+	public int gameID; // идентификатор игрока (1 - первый, 2 - второй)
 	private int speed = 0; // cкорость игры (милисекунды)
-	// private int slow = 500 - speed;// замедление (чем больще скорость, тем
-	// меньше замедление)
+
 	private int level; // уровень (вляет на замедление, т.е. на скорость падения
 						// фигур)
 	private final int X_SIZE = 24; // размеры поля в блоках
@@ -57,26 +51,13 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 	private GC gc; // для рисования на изображении
 	private Block[][] blocks;
 	private Text textInfo;// инф-я о текущем уровне и счете
-	
-	//private BlockingQueue<Tetramino.Shape> figuresQueue = new LinkedBlockingQueue<Tetramino.Shape>(); // очередь
-																										// для
-																										// фигур
-	//private BlockingQueue<Integer> figuresQueue = new LinkedBlockingQueue<Integer>();
+
 	private Shape buffer; // хранит текущий выбор второго игрока
-	
 	private Shape[] figuresChoose = new Shape[3]; // массив
-	//private int[] figuresChoose = new int[3]; // массив
-																		// для
-																		// текуших
-																		// фигур
-																		// на
-																		// выбор
 	boolean choose; // сделал ли выбор 2-й игрок (если нет, фигура генерируется
 					// рандомно)
-	
-	private Client client;
-	
-	// конструктор 
+
+	// конструктор
 	public TetrisCanvas(Composite parent) {
 		super(parent, SWT.CENTER);// вызываем конструктор суперкласса
 		gameStarted = false;
@@ -100,53 +81,227 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 		gc = new GC(backimage); // будем рисовать на нем
 	}
 
-	public void drawWaiting() 
-	{
+	public void errors(String string) {
+		Display.getDefault().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				Shell shell_help = new Shell(getDisplay(), SWT.TITLE | SWT.CLOSE | SWT.MIN);
+				shell_help.setText("Tetris x 2: ошибка");
+				GridLayout layout = new GridLayout(1, true);
+
+				shell_help.setLayout(layout);
+				shell_help.setBounds(300, 50, 345, 70);
+
+				Label label = new Label(shell_help, SWT.NONE);
+				label.setText(string);
+
+				GridData data = new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1);
+				label.setLayoutData(data);
+
+				shell_help.open();
+			}
+		});
+	}
+
+	// начинаем новую сессию и ждем второго игрока
+	public void waitingPlayer() {
+		errorWindow = false;
 		gameID = 1;
-		// Тут дб отрисовка надписи, что ждем
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
+
 				try {
 					client = new Client("127.0.0.1", 5876);
-					} catch (UnknownHostException e1) {
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						e1.printStackTrace();
+				} catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
 					}
-				System.out.println("Waiting another client...");
+
+				}
+
 				try {
-							client.createSession();
-						} catch (ClassNotFoundException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
+					client.createSession();
+					Display.getDefault().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							textInfo.setText("Ожидаем второго игрока...");
 						}
-						//Создаем новую игру и ждем ее начатия
-						try {
-								message = client.readMessage();
-								System.out.println("income message - " + message.getMessageType());
-						} catch (ClassNotFoundException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-						if (message.getMessageType().equals(Type.STARTED))
+					});
+				}
+
+				catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
+					}
+				}
+
+				// Создаем новую игру и ждем ее начала
+				try {
+					message = client.readMessage();
+				}
+
+				catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
+					}
+				}
+				// System.out.println("income message - " +
+				// message.getMessageType());
+				try {
+					if (message.getMessageType().equals(Type.STARTED))
 						Display.getDefault().asyncExec(new Runnable() {
-							
+
 							@Override
 							public void run() {
 								try {
 									initializeGame();
-								} catch (IOException e) {
-									e.printStackTrace();
+								} catch (Exception e) {
+									if (errorWindow == false) {
+										errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+										errorWindow = true;
+									}
 								}
 							}
 						});
+				} catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
 					}
-				}).start();
+				}
+			}
+		}).start();
 	}
-	
+
+	// выбор сессии для подключения из списка текущих
+	public void connectSession() {
+		gameID = 2;
+		// System.out.println("Second client");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					client = new Client("localhost", 5876);
+				} catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
+					}
+				}
+				
+				try {
+					client.joinSession(1);
+				} catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
+					}
+				}
+				
+				try {
+					client.sendMessage(new Message(Message.Type.JOIN, ""));
+				} catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
+					}
+				}
+				
+				try {
+					message = client.readMessage();
+					// System.out.println("income message - " +
+					// message.getMessageType());
+				} catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
+					}
+				}
+				
+				if (message.getMessageType().equals(Type.STARTED))
+					Display.getDefault().asyncExec(new Runnable() {
+
+						@Override
+						public void run() {
+							try {
+								joinGame();
+							} catch (Exception e) {
+								if (errorWindow == false) {
+									errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+									errorWindow = true;
+								}
+							}
+						}
+					});
+			}
+		}).start();
+	}
+
+	// начинаем новую игру
+	public void initializeGame() throws IOException {
+		gameStarted = true;
+		score = 0;
+		drawBlocks();
+
+		createNullTetramino();
+
+		try {
+			message = client.readMessage();
+			// System.out.println("income message - " +
+			// message.getMessageType());
+		} catch (Exception e) {
+			if (errorWindow == false) {
+				errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+				errorWindow = true;
+			}
+		}
+
+		processingClient(message);
+		getDisplay().timerExec(0, this);// вызывает метод run
+	}
+
+	// присоединяемся к существующей игре
+	public void joinGame() throws IOException {
+		getShell().setSize(545, 595);
+		gameStarted = true;
+		score = 0;
+		drawBlocks();
+
+		// создаем 3 фигуры для выбора 2-му игроку
+		for (int i = 0; i < 3; i++) {
+			createTetraminoSelection(i);
+			transformTetraminoToBlocks();
+		}
+		// создаем первую фигуру для игрового поля (рандомно)
+		createNullTetramino();
+
+		// запускаем игровой цикл
+		getDisplay().timerExec(0, this); // вызывает метод run
+	}
+
+	// ф-я окончания игры
+	private void gameOver() {
+		getDisplay().timerExec(-1, this); // отменяем выполнение
+		try {
+			client.closeSession();
+		} catch (Exception e) {
+			if (errorWindow == false) {
+				errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+				errorWindow = true;
+			}
+		}
+		gameStarted = false;
+		choose = false;
+		errorWindow = false;
+		speed = 0;
+		message = null;
+	}
+
 	public void drawBlocks() {
 		blocks = new Block[X_SIZE][Y_SIZE];// создаем массив для поля
 
@@ -172,112 +327,7 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 			blocks[14][i] = new Block(getDisplay().getSystemColor(gridColor), true);
 			blocks[15][i] = new Block(getDisplay().getSystemColor(gridColor), true);
 			blocks[16][i] = new Block(getDisplay().getSystemColor(gridColor), true);
-			//blocks[25][i] = new Block(getDisplay().getSystemColor(gridColor), true);
 		}
-	}
-	
-	
-	public void drawSessionList(){
-		gameID = 2;
-		//TODO Отрисовка пустого списка
-		System.out.println("Second client");
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					client = new Client("localhost",5876);
-				} catch (UnknownHostException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				// TODO Получаем список сессий
-				try {
-					client.joinSession(1);
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				
-				try {
-					client.sendMessage(new Message (Message.Type.JOIN, ""));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				try {
-						message = client.readMessage();
-						System.out.println("income message - " + message.getMessageType());
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				if (message.getMessageType().equals(Type.STARTED))
-				Display.getDefault().asyncExec(new Runnable() {
-					
-					@Override
-					public void run() {
-						try {
-							joinGame();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-				});
-			}
-		}).start();
-	}
-	
-	
-	// начинаем новую игру
-	public void initializeGame() throws IOException {
-		gameStarted = true;
-		score = 0;
-		drawBlocks();
-		
-		getDisplay().timerExec(0, this);// вызывает метод run
-		// создаем 3 фигуры для выбора 2-му игроку
-		for (int i = 0; i < 3; i++) {
-			createTetraminoSelection(i);
-			transformTetraminoToBlocks();
-		}
-//		if (client.hasMessage())
-			try {
-				message = client.readMessage();
-				System.out.println("income message - " + message.getMessageType());
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			}
-			processingClient(message);
-			
-		// запускаем игровой цикл
-		//getDisplay().timerExec(0, this);// вызывает метод run
-}
-	// присоединяемся к существующей игре
-		public void joinGame() throws IOException {
-						
-			gameStarted = true;
-			score = 0;
-			drawBlocks();
-			// создаем 3 фигуры для выбора 2-му игроку
-			for (int i = 0; i < 3; i++) {
-				createTetraminoSelection(i);
-				transformTetraminoToBlocks();
-			}
-			// создаем первую фигуру для игрового поля (рандомно)
-			createNullTetramino();
-			
-			// запускаем игровой цикл
-			getDisplay().timerExec(0, this); // вызывает метод run
-		}
-
-	// ф-я окончания игры
-	private void gameOver() {
-		getDisplay().timerExec(-1, this); // отменяем выполнение
-		gameStarted = false;
-		choose = false;
-		//figuresQueue.clear(); // очищаем очередь фигур
 	}
 
 	// ф-я управления видимостью сетки
@@ -290,25 +340,29 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 
 	// ф-я создания "нулевой" (первой, рандомной) фигуры
 	private void createNullTetramino() throws IOException {
-		tetramino = new Tetramino(this, 7, 0);
-		buffer = tetramino.shape;
-		Message message = new Message(Type.FORMNUMBER, "");
-		message.setAdditionalData(buffer);
-		client.sendMessage(message);
+		tetramino = new Tetramino(this, Shape.Z, 7, 0);
+		// buffer = tetramino.shape;
+		// Message message = new Message(Type.FORMNUMBER, "");
+		// message.setAdditionalData(buffer);
+		// client.sendMessage(message);
+
 	}
-	
-	
-	// ф-я создания новых фигур сверху посередине игрового поля в зависимости от shape'а (сообщения пришедшего от 2-го игрока)
+
+	// ф-я создания новых фигур сверху посередине игрового поля в зависимости от
+	// shape'а (сообщения пришедшего от 2-го игрока)
 	private void createTetramino(Shape shape) {
 		tetramino = new Tetramino(this, shape, 7, 0);
 	}
 
-
-	// ф-я создания новых РАЗНЫХ фигур на выбор для 2-го игрока (и записывания их в массив)
+	// ф-я создания новых РАЗНЫХ фигур на выбор для 2-го игрока (и записывания
+	// их в массив)
 	private void createTetraminoSelection(int i) {
-
 		if (i == 0) {
 			tetramino = new Tetramino(this, 19, i * 8 + 2);
+			if (tetramino.shape == Shape.I) {
+				Shape shape = tetramino.shape;
+				tetramino = new Tetramino(this, shape, 20, i * 8 + 2);
+			}
 			figuresChoose[i] = tetramino.shape;
 		}
 		if (i == 1) {
@@ -316,12 +370,20 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 			while (tetramino.shape == figuresChoose[0]) {
 				tetramino = new Tetramino(this, 19, i * 8 + 2);
 			}
+			if (tetramino.shape == Shape.I) {
+				Shape shape = tetramino.shape;
+				tetramino = new Tetramino(this, shape, 20, i * 8 + 2);
+			}
 			figuresChoose[i] = tetramino.shape;
 		}
 		if (i == 2) {
 			tetramino = new Tetramino(this, 19, i * 8 + 2);
 			while (tetramino.shape == figuresChoose[0] || tetramino.shape == figuresChoose[1]) {
 				tetramino = new Tetramino(this, 19, i * 8 + 2);
+			}
+			if (tetramino.shape == Shape.I) {
+				Shape shape = tetramino.shape;
+				tetramino = new Tetramino(this, shape, 20, i * 8 + 2);
 			}
 			figuresChoose[i] = tetramino.shape;
 		}
@@ -356,12 +418,6 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 		}
 	}
 
-	// сброс фигуры вниз
-	private void fall() {
-		while (stepDown()) {
-		}
-	}
-
 	// проверка, достигла ли фигура заполненных блоков (границ поля или "старых"
 	// фигур)
 	private boolean isTouching(int x, int y) {
@@ -376,43 +432,69 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 		return false;
 	}
 
-	private boolean stepDown() {// фигура двигается вниз, пока не достигнет дна (или других "старых"
-								// фигур)
+	private boolean stepDown() {// фигура двигается вниз, пока не достигнет дна
+		// (или других "старых"
+		// фигур)
 		if (!isTouching(0, 1)) {
 			tetramino.y++;
 			return true;
 		} else { // если фигура достигла дна, то:
 			if (tetramino.y <= 3) {// game over, если осталось меньше 3-х
-									// свободных полос
+				// свободных полос
 				gameOver();
 				return false;
 			}
-			if (choose == false) { // если 2-й игрок не сделал выбор, то фигура
-									// добавляется рандомно
-				int random = (int) Math.floor(Math.random() * 3);
-					//figuresQueue.put(figuresChoose[random]);
+			if (gameID == 2) {
+				if (choose == false) { // если 2-й игрок не сделал выбор, то
+										// фигура добавляется рандомно
+					int random = (int) Math.floor(Math.random() * 3);
 					buffer = figuresChoose[random];
-					message = new Message (Message.Type.FORMNUMBER, "");
+					message = new Message(Message.Type.FORMNUMBER, "");
 					message.setAdditionalData(buffer);
 					try {
 						client.sendMessage(message);
-					} catch (IOException e) {
-						e.printStackTrace();
+					} catch (Exception e) {
+						if (errorWindow == false) {
+							errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+							errorWindow = true;
+						}
 					}
+				}
 			}
-			transformTetraminoToBlocks();// преобразуем фигуру в "неактивные"
-											// блоки, если достигли дна
-
-			choose = false; // "обнуляем" выбор 2-го игрока
-			clearTetraminoSelection(); // очищаем поле дял выбора фигур
-			for (int i = 0; i < 3; i++) { // вызываем новые фигуры для выбора
+			transformTetraminoToBlocks();
+			choose = false;
+			clearTetraminoSelection();
+			for (int i = 0; i < 3; i++) {
 				createTetraminoSelection(i);
 				transformTetraminoToBlocks();
 			}
-			//createTetramino(figuresQueue.poll());// вызываем новую фигуру на игровое поле !!!!!!!! в скобочках элеменет перечисления, полученный от 2-го игркоа
-			createTetramino(buffer);
-			return false;
 		}
+		if (gameID == 1) {
+			int counter = 0;
+			while (buffer == null) {
+				try {
+					counter++;
+					if (counter > 3) {
+						errors("Игрок 2 отключился. Приложение будет завершено.");
+						gameOver();
+						getDisplay().dispose();
+					}
+					//if (client.hasMessage()) {
+						message = client.readMessage();
+						processingClient(message);
+					//}
+				} catch (Exception e) {
+					if (errorWindow == false) {
+						errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+						errorWindow = true;
+					}
+				}
+			}
+		}
+		transformTetraminoToBlocks();
+		createTetramino(buffer);
+		buffer = null;
+		return false;
 	}
 
 	private void stepLeft() {// двигайся влево, пока не достиг стены (или других
@@ -431,7 +513,7 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 	// очищение заполненной линии и смещение остальных на один блок вниз
 	private void clearFullLine(int current) {
 		for (int i = current; i > 0; i--) {
-			for (int j = 0; j < X_SIZE-10; j++) {
+			for (int j = 0; j < X_SIZE - 10; j++) {
 				blocks[j][i].setColor(blocks[j][i - 1].getColor());// смещаем
 																	// цвет на
 																	// блок вниз
@@ -473,92 +555,91 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 	// ф-я увеличения скорости игры
 	private void speedUp() {
 		speed += 30;
-		// slow -= 30;// уменьшить задержку (увеличить скорость падения фигур)
-		// if (slow < 1)
-		// slow = 1;
 		if (speed > 499)
 			speed = 499;
 	}
 
 	// обработка сообщений
-	private void processingClient(Message answer){
-		if(answer.getMessageType().equals(Type.KEYNUMBER)) {
-			System.out.println("income message - " + answer.getMessageType() + " + " + answer.getMessage());
+	private void processingClient(Message answer) {
+		if (answer.getMessageType().equals(Type.KEYNUMBER)) {
+			// System.out.println("income message - " + answer.getMessageType()
+			// + " + " + answer.getMessage());
 			keyP(answer.getMessage());
 		}
-		if(answer.getMessageType().equals(Type.SUCCESS)) {
-			System.out.println("income message - " + answer.getMessageType());
-		}
-		else if(answer.getMessageType().equals(Type.FORMNUMBER)) {
-			System.out.println("income message lalala - " + answer.getMessageType() + " + " + answer.getMessage());
+		if (answer.getMessageType().equals(Type.SUCCESS)) {
+			// System.out.println("income message - " +
+			// answer.getMessageType());
+		} else if (answer.getMessageType().equals(Type.FORMNUMBER)) {
+			// System.out.println("income message lalala - " +
+			// answer.getMessageType() + " + " + answer.getMessage());
 			buffer = (Shape) answer.getAdditionalData();
 			choose = true;
 		}
-		
-		/*else if(answer.getMessageType().equals(Type.JOIN)) {
-			try {
-				client.sendMessage(answer);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}*/
-			
+
 	}
-	
+
 	public void run() {
 		if (gameStarted) {
 			iteration();
 		}
 	}
-	
-	public void iteration()
-	{
+
+	public void iteration() {
 		if (gameID == 1) {
 			try {
 				if (client.hasMessage()) {
 					try {
 						message = client.readMessage();
-					} catch (ClassNotFoundException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
+					} catch (Exception e) {
+						if (errorWindow == false) {
+							errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+							gameOver();
+							errorWindow = true;
+						}
 					}
 					processingClient(message);
-					}
-			} catch (IOException e) {
-				e.printStackTrace();
+				}
+			}
+
+			catch (Exception e) {
+				if (errorWindow == false) {
+					errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+					gameOver();
+					errorWindow = true;
+				}
 			}
 			stepDown();// движение вниз
 			redraw();// перерисовка фигуры
 			checkLine(); // проверка заполненных линиий
-			getDisplay().timerExec(500-speed, this);// вызов с замедлением (оно
-											// постепенно уменьшается, в
-											// зависимости от уровня)
-		}
-		else if (gameID == 2) {
+			getDisplay().timerExec(500 - speed, this);
+		} else if (gameID == 2) {
 			try {
 				if (client.hasMessage()) {
 					try {
 						processingClient(client.readMessage());
-						
-					} catch (ClassNotFoundException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
+
+					} catch (Exception e) {
+						if (errorWindow == false) {
+							errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+							gameOver();
+							errorWindow = true;
+						}
 					}
-					}
-			} catch (IOException e) {
-				e.printStackTrace();
+				}
+			} catch (Exception e) {
+				if (errorWindow == false) {
+					errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+					gameOver();
+					errorWindow = true;
+				}
 			}
 			stepDown();// движение вниз
 			redraw();// перерисовка фигуры
 			checkLine(); // проверка заполненных линиий
-			getDisplay().timerExec(500-speed, this);// вызов с замедлением (оно
-											// постепенно уменьшается, в
-											// зависимости от уровня)
+			getDisplay().timerExec(500 - speed, this);
 		}
 	}
-	
+
 	// рисование фигур
 	private void drawTetramino(GC gc, Tetramino tetramino) {
 		for (int x = 0; x < 4; x++) {
@@ -578,43 +659,36 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 			}
 		}
 	}
-	
-	public void keyP(String str) { 
-			if (str.equals("probel")) { // если пробел, то сбрасываем фигуру
-										// вниз
-				fall();
-				redraw();
-			} else if (str.equals("vverh")){ // если вверх, то вращаем
-														// фигуру
-				tetramino.rotate();
-				while (isTouching(0, 0)) {// чтобы фигура не застревала в правой
-											// границе поля
-					tetramino.x--;
-				}
-				redraw();
-			} else if (str.equals("vniz")) {
-				stepDown();
-				redraw();
-			} else if (str.equals("vlevo")) {
-				stepLeft();
-				redraw();
-			} else if (str.equals("vpravo")) {
-				stepRight();
-				redraw();
+
+	public void keyP(String str) {
+
+		if (str.equals("vverh")) { // если вверх, то вращаем
+									// фигуру
+			tetramino.rotate();
+			while (isTouching(0, 0)) {// чтобы фигура не застревала в правой
+										// границе поля
+				tetramino.x--;
 			}
+			redraw();
+		} else if (str.equals("vniz")) {
+			stepDown();
+			redraw();
+		} else if (str.equals("vlevo")) {
+			stepLeft();
+			redraw();
+		} else if (str.equals("vpravo")) {
+			stepRight();
+			redraw();
+		}
 	}
-	
+
 	// события, связанные с нажатием клавиш (зависят от id игрока!)
 	public void keyPressed(KeyEvent key) {
-		if (gameID  == 1) { // если id нечетный, действия 1-го игрока
+		if (gameID == 1) { // действия 1-го игрока
 			message = new Message(Message.Type.KEYNUMBER, "");
-			if (key.character == ' ') { // если пробел, то сбрасываем фигуру
-										// вниз
-				fall();
-				redraw();
-				message.setMessage("probel");
-			} else if (key.keyCode == SWT.ARROW_UP) { // если вверх, то вращаем
-														// фигуру
+
+			if (key.keyCode == SWT.ARROW_UP) { // если вверх, то вращаем
+												// фигуру
 				tetramino.rotate();
 				while (isTouching(0, 0)) {// чтобы фигура не застревала в правой
 											// границе поля
@@ -637,11 +711,15 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 			}
 			try {
 				client.sendMessage(message);
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				if (errorWindow == false) {
+					errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+					gameOver();
+					errorWindow = true;
+				}
 			}
 		}
-		if (gameID == 2) { // если id четный, действия 2-го игрока
+		if (gameID == 2) { // действия 2-го игрока
 			message = new Message(Message.Type.FORMNUMBER, "");
 			if (key.keyCode == SWT.ARROW_UP) { // если вверх, то выбираем 1-ю
 												// фигуру
@@ -650,7 +728,7 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 					choose = true; // выбор сделан!
 
 				}
-				
+
 			} else if (key.keyCode == SWT.ARROW_DOWN) { // если вниз, то
 														// выбираем
 														// 3-ю
@@ -675,8 +753,12 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 			message.setAdditionalData(buffer);
 			try {
 				client.sendMessage(message);
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				if (errorWindow == false) {
+					errors("Произошла непредвиденная ошибка: попробуйте еще раз");
+					gameOver();
+					errorWindow = true;
+				}
 			}
 		}
 
@@ -686,6 +768,7 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 											// клавиш
 		//
 	}
+
 	// освобождаем ресурсы
 	public void widgetDisposed(DisposeEvent e) {
 		getDisplay().timerExec(-1, this);
@@ -713,7 +796,6 @@ public class TetrisCanvas extends Canvas implements PaintListener, Runnable, Key
 																			// уровне
 																			// и
 																			// счете
-
 			// фигуры
 			drawTetramino(gc, tetramino);
 		} else {// если игра окончена

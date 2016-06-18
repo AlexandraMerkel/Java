@@ -1,0 +1,34 @@
+2016-06-18 23:44:56,408 [Worker-11] INFO  o.e.m.c.i.l.LifecycleMappingFactory - Using org.eclipse.m2e.jdt.JarLifecycleMapping lifecycle mapping for MavenProject: TetrisGame:TetrisGame:0.0.1-SNAPSHOT @ D:\finalTetrisGame\TetrisGame\pom.xml.
+2016-06-18 23:44:56,408 [Worker-1] INFO  o.e.m.c.i.l.LifecycleMappingFactory - Using org.eclipse.m2e.jdt.JarLifecycleMapping lifecycle mapping for MavenProject: TetrisGame:TetrisGame:0.0.1-SNAPSHOT @ D:\finalTetrisGame\TetrisGame\pom.xml.
+2016-06-18 23:45:02,395 [Worker-11] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:45:02,396 [Worker-11] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\main\resources
+2016-06-18 23:45:02,399 [Worker-11] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:45:02,400 [Worker-11] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\test\resources
+2016-06-18 23:45:21,102 [Worker-1] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:45:21,104 [Worker-1] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\main\resources
+2016-06-18 23:45:22,465 [Worker-2] INFO  o.e.m.c.i.l.LifecycleMappingFactory - Using org.eclipse.m2e.jdt.JarLifecycleMapping lifecycle mapping for MavenProject: TetrisGame:TetrisGame:0.0.1-SNAPSHOT @ D:\finalTetrisGame\TetrisGame\pom.xml.
+2016-06-18 23:45:22,465 [Worker-1] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:45:22,466 [Worker-1] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\test\resources
+2016-06-18 23:45:23,526 [Worker-1] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:45:23,527 [Worker-1] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\main\resources
+2016-06-18 23:45:23,528 [Worker-1] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:45:23,529 [Worker-1] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\test\resources
+2016-06-18 23:46:47,108 [Worker-8] INFO  o.e.m.c.i.l.LifecycleMappingFactory - Using org.eclipse.m2e.jdt.JarLifecycleMapping lifecycle mapping for MavenProject: TetrisGame:TetrisGame:0.0.1-SNAPSHOT @ D:\finalTetrisGame\TetrisGame\pom.xml.
+2016-06-18 23:46:47,574 [Worker-8] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:46:47,575 [Worker-8] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\main\resources
+2016-06-18 23:46:47,576 [Worker-8] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:46:47,577 [Worker-8] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\test\resources
+2016-06-18 23:47:26,802 [Worker-6] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:47:26,804 [Worker-6] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\main\resources
+2016-06-18 23:47:26,804 [Worker-6] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:47:26,805 [Worker-6] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\test\resources
+2016-06-18 23:47:29,881 [Worker-6] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:47:29,882 [Worker-6] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\main\resources
+2016-06-18 23:47:29,883 [Worker-6] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:47:29,884 [Worker-6] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\test\resources
+2016-06-18 23:47:45,816 [Worker-2] INFO  o.e.m.i.launch.MavenLaunchDelegate - D:\finalTetrisGame\TetrisGame
+2016-06-18 23:47:45,817 [Worker-2] INFO  o.e.m.i.launch.MavenLaunchDelegate -  mvn  -B install
+2016-06-18 23:47:58,938 [Worker-13] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:47:58,939 [Worker-13] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\main\resources
+2016-06-18 23:47:58,940 [Worker-13] WARN  o.e.m.c.i.embedder.EclipseLogger - Using platform encoding (Cp1251 actually) to copy filtered resources, i.e. build is platform dependent!
+2016-06-18 23:47:58,941 [Worker-13] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory D:\finalTetrisGame\TetrisGame\src\test\resources

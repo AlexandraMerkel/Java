@@ -41,13 +41,6 @@ public class Client {
 		clientSocket.close();
 	}
 	
-	@SuppressWarnings("unchecked")
-	public Map<Integer, String> getAvailableSessions() throws ClassNotFoundException, IOException{
-		Message message = new Message(Type.GET_AVAILABLE_SESSIONS, "");
-		sendMessage(message);
-		return (Map<Integer, String>)readMessage().getAdditionalData();
-	}
-	
 	public void sendMessage(Message message) throws IOException{
 		oos.writeObject(message);
 	}

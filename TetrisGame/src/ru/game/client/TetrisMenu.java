@@ -6,14 +6,18 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 
 public class TetrisMenu 
 {
 	private static TetrisCanvas tetris;
 	public static TetrisGame shell;
 	private static Display display;
-	private Text textInfo;
+	private Label textInfo, textInfo2;
 	
 	public TetrisMenu(TetrisGame shell) 
 	{
@@ -70,8 +74,8 @@ public class TetrisMenu
 	    newGameItem.addListener(SWT.Selection, event-> 
 	    	{
 	    		try {
-					tetris.drawWaiting();
-				} catch (Exception e) {
+					tetris.waitingPlayer();
+	    			} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}	
@@ -81,8 +85,8 @@ public class TetrisMenu
 	    joinGameItem.addListener(SWT.Selection, event-> 
     		{
     			try {
-					tetris.drawSessionList();
-				} catch (Exception e) {
+					tetris.connectSession();
+    			} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}	
@@ -110,29 +114,76 @@ public class TetrisMenu
 	   	
 	   	helpItem.addListener(SWT.Selection, event->
    		{
-   			Shell shell_help = new Shell(display, SWT.SHELL_TRIM | SWT.CENTER);
-	        FillLayout layout = new FillLayout();
-	        shell_help.setLayout(layout);
-	        shell_help.setBounds(300, 50, 500, 600); // положение и размеры окна
-	        shell_help.setText("Справка");
-	        textInfo = new Text(shell_help, SWT.NONE);
-   			textInfo.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
-   			textInfo.setText("тут будут правила игры");
-	        shell_help.open();
+   			Shell shell_help = new Shell(display, SWT.TITLE | SWT.CLOSE | SWT.MIN);
+   			shell_help.setText("Tetris x 2: справка");
+   		    GridLayout layout = new GridLayout(1, true);
+   		    
+   		    shell_help.setLayout(layout);
+   		    shell_help.setBounds(300, 50, 350, 310);
+   		    
+   		    Label label = new Label(shell_help, SWT.NONE);
+   		    label.setText("Правила игры:");
+   		    
+   		    label = new Label(shell_help, SWT.SEPARATOR | SWT.HORIZONTAL);
+   		    
+   		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("   1-й игрок управляет движениями фигур");
+		    
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("   Управление: клавиши-стрелки");
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("      вверх - вращение");
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("      влево - движение влево");
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("      вправо - движение вправо");
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("      вниз - ускоренное движение вниз");
+ 		    		    
+ 		    label = new Label(shell_help, SWT.NONE);
+ 		    label.setText("   2-й игрок определяет, какая фигура упадет следующей");
+ 		    
+ 		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("   Управление: клавиши-стрелки");
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("      вверх - выбрать верхнюю фигуру");
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("      влево/вправо - выбрать среднюю фигуру");
+		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("      вниз - выбрать нижнюю фигуру");
+ 		    
+ 		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("   Цель: набрать как можно больше очков");
+   		    
+   		    GridData data = new GridData(SWT.FILL, SWT.TOP, true, true, 1, 1);
+   		    label.setLayoutData(data);
+   		    
+   		    shell_help.open();
     	
     });
    	
    	infoItem.addListener(SWT.Selection, event->
 		{
-			Shell shell_help = new Shell(display, SWT.SHELL_TRIM | SWT.CENTER);
-        FillLayout layout = new FillLayout();
-        shell_help.setLayout(layout);
-        shell_help.setBounds(300, 50, 400, 400); // положение и размеры окна
-        shell_help.setText("Tetris x 2: сведения");
-        textInfo = new Text(shell_help, SWT.NONE);
-			textInfo.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
-			textInfo.setText("тут будет инфа о программе");
-        shell_help.open();	   
+			Shell shell_help = new Shell(display, SWT.TITLE | SWT.CLOSE | SWT.MIN);
+			shell_help.setText("Tetris x 2: о программе");
+   		    GridLayout layout = new GridLayout(1, false);
+
+   		    shell_help.setLayout(layout);
+   		    shell_help.setBounds(300, 50, 400, 200);
+   		    
+   		    Label label = new Label(shell_help, SWT.NONE);
+   		    label.setText("Версия 1.0");
+   		    
+   		    label = new Label(shell_help, SWT.NONE);
+		    label.setText("Ничьи права не защищены");
+   		    
+   		    label = new Label(shell_help, SWT.NONE);
+   		    label.setText("Авторы: Меркель Александра, Порошкина Валерия");
+   		   
+   		    GridData data = new GridData(SWT.FILL, SWT.TOP, false, false, 2, 1);
+   		    label.setLayoutData(data);
+   		 
+   		    shell_help.open();
 		});
 	}
 }

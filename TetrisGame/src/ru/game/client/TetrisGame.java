@@ -35,8 +35,8 @@ public class TetrisGame extends Shell {
 
 	// задаем внешний вид окна игры
 	protected void createContentsofWindow() {
-		setBounds(250, 50, 545, 595); // положение и размеры окна
-		setText("Tetris Game");
+		setBounds(250, 50, 345, 595); // положение и размеры окна
+		setText("Tetris x 2");
 
 		setLayout(new GridLayout());
 
